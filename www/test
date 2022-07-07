@@ -1,0 +1,470 @@
+<html>
+<head>
+<title>Real-Time Subway Key Performance Indicators</title>
+<script src="resources/vue.js"></script>
+<script src="justgage-1.2.2/raphael-2.1.4.min.js"></script>
+<script src="justgage-1.2.2/justgage.js"></script>
+
+<style>
+body {
+  background-color: #000000;
+  font-family: sans-serif;
+}
+
+.row {
+  width: 100%;
+  height: 37.5%;
+  text-align: center;
+}
+
+.header {
+  width: 100%;
+  height: 7.5%;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.datetime {
+  font-size: 3em;
+}
+
+.sub {
+  font-size: 2em;
+  height: 5%
+}
+
+.tph {
+  height: 10%;
+  color: #FFFFFF;
+  font-size: 3em;
+}
+
+.column {
+  float: left;
+  width: 33%;
+  margin: auto;
+  text-align: center;
+}
+
+.yustph {
+  color: #FFFF00;
+}
+
+.bdtph {
+  color: #009933;
+}
+
+.shptph {
+  color: #660066;
+}
+
+.sacol {
+  width: 50%;
+}
+
+.clear {
+  clear: both;
+}
+</style>
+</head>
+
+<body>
+<div id="rtKPI">
+
+<div class="header datetime">
+{{ currentdate }}
+</div>
+<div class="clear"></div>
+<div class="header sub">
+Trains Per Hour
+</div>
+<div class="clear"></div>
+<div class="tph">
+<div class="column yustph">
+AM: {{ yustpham }}
+<br />
+PM: {{ yustphpm }}
+</div>
+
+<div class="column bdtph">
+AM: {{ bdtpham }}
+<br />
+PM: {{ bdtphpm }}
+</div>
+
+<div class="column shptph">
+AM: {{ shptpham }}
+<br />
+PM: {{ shptphpm }}
+</div>
+</div>
+<div class="clear"></div>
+<div class="row">
+<div class="column sacol">
+<yus_sa :yusschadhpercent="yusschadhpercent"></yus_sa>
+</div>
+<div class="column sacol">
+<bd_sa :bdschadhpercent="bdschadhpercent"></bd_sa>
+</div>
+</div>
+<div class="clear"></div>
+<div class="row">
+<div class="column">
+<yus_hw :yushdwypercent="yushdwypercent"></yus_hw>
+</div>
+<div class="column">
+<bd_hw :bdhdwypercent="bdhdwypercent"></bd_hw>
+</div>
+<div class="column">
+<shp_hw :shphdwypercent="shphdwypercent"></shp_hw>
+</div>
+</div>
+<div class="clear"></div>
+</div>
+</body>
+
+<script>
+var HdwyGaugeYUS;
+var HdwyGaugeBD;
+var HdwyGaugeSHP;
+var SAGaugeYUS;
+var SAGaugeBD;
+
+Vue.component('yus_hw', {
+  props: {
+    yushdwypercent: {
+      required: true
+    }
+  },
+  template: `<div id="yusHdwyGauge" :data-value=yushdwypercent></div>`
+})
+
+Vue.component('bd_hw', {
+  props: {
+    bdhdwypercent: {
+      required: true
+    }
+  },
+  template: `<div id="bdHdwyGauge" :data-value=bdhdwypercent></div>`
+})
+
+Vue.component('shp_hw', {
+  props: {
+    shphdwypercent: {
+      required: true
+    }
+  },
+  template: `<div id="shpHdwyGauge" :data-value=shphdwypercent></div>`
+})
+
+Vue.component('yus_sa', {
+  props: {
+    yusschadhpercent: {
+      required: true
+    }
+  },
+  template: `<div id="yusSAGauge" :data-value=yusschadhpercent></div>`
+})
+
+Vue.component('bd_sa', {
+  props: {
+    bdschadhpercent: {
+      required: true
+    }
+  },
+  template: `<div id="bdSAGauge" :data-value=bdschadhpercent></div>`
+})
+
+var vm = new Vue({
+  el: '#rtKPI',
+  data: {
+    yus_hdwy: 0,
+    bd_hdwy: 0,
+    shp_hdwy: 0,
+    yus_schadh: 0,
+    bd_schadh: 0,
+    yushdwypercent: 0,
+    bdhdwypercent: 0,
+    shphdwypercent: 0,
+    yusschadhpercent: 0,
+    bdschadhpercent: 0,
+    yus_tph_am: 0,
+    yus_tph_pm: 0,
+    bd_tph_am: 0,
+    bd_tph_pm: 0,
+    shp_tph_am: 0,
+    shp_tph_pm: 0,
+    yustpham: 0,
+    yustphpm: 0,
+    bdtpham: 0,
+    bdtphpm: 0,
+    shptpham: 0,
+    shptphpm: 0,
+    yusdate: [],
+    currentdate: []
+  },
+  computed: {
+    yus_hdwy_percent () {
+      return Math.round(this.yus_hdwy * 1000) / 10;
+    },
+    bd_hdwy_percent () {
+      return Math.round(this.bd_hdwy * 1000) / 10;
+    },
+    shp_hdwy_percent () {
+      return Math.round(this.shp_hdwy * 1000) / 10;
+    },
+    yus_schadh_percent () {
+      return Math.round(this.yus_schadh * 1000) / 10;
+    },
+    bd_schadh_percent () {
+      return Math.round(this.bd_schadh * 1000) / 10;
+    },
+    yus_tph_am_rounded () {
+      return Math.round(this.yus_tph_am * 10) / 10;
+    },
+    yus_tph_pm_rounded () {
+      return Math.round(this.yus_tph_pm * 10) / 10;
+    },
+    bd_tph_am_rounded () {
+      return Math.round(this.bd_tph_am * 10) / 10;
+    },
+    bd_tph_pm_rounded () {
+      return Math.round(this.bd_tph_pm * 10) / 10;
+    },
+    shp_tph_am_rounded () {
+      return Math.round(this.shp_tph_am * 10) / 10;
+    },
+    shp_tph_pm_rounded () {
+      return Math.round(this.shp_tph_pm * 10) / 10;
+    },
+    current_date () {
+      var cdate = new Date(this.yusdate);
+      var options = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      return cdate.toLocaleString('en-us', options);
+    }
+  },
+  created () {
+    this.fetchAllData();
+    setInterval(function() {
+      vm.fetchAllData();
+    }, 190000);
+  },
+  updated () {
+    this.updateYUSData();
+    this.updateBDData();
+    this.updateSHPData();
+    this.updateDate();
+  },
+  methods: {
+    fetchAllData: function() {
+      fetch('http://10.200.50.152:3000/YUS')
+        .then(response => response.json())
+        .then(json => {
+          this.yus_hdwy = json.HEADER.hdwyDaily.performance
+          vm.yushdwypercent = vm.yus_hdwy_percent
+          this.yus_schadh = json.HEADER.schAdh.performance
+          vm.yusschadhpercent = vm.yus_schadh_percent
+          this.yus_tph_am = json.HEADER.hdwyAm.trainsPerHour
+          vm.yustpham = vm.yus_tph_am_rounded
+          this.yus_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+          vm.yustphpm = vm.yus_tph_pm_rounded
+          this.yusdate = json.HEADER.timeExecuted
+          vm.current_date = vm.yusdate
+        })
+        .then(
+          fetch('http://10.200.50.152:3000/BD')
+          .then(response => response.json())
+          .then(json => {
+            this.bd_hdwy = json.HEADER.hdwyDaily.performance
+            vm.bdhdwypercent = vm.bd_hdwy_percent
+            this.bd_schadh = json.HEADER.schAdh.performance
+            vm.bdschadhpercent = vm.bd_schadh_percent
+            this.bd_tph_am = json.HEADER.hdwyAm.trainsPerHour
+            vm.bdtpham = vm.bd_tph_am_rounded
+            this.bd_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+            vm.bdtphpm = vm.bd_tph_pm_rounded
+          })
+        )
+        .then(
+          fetch('http://10.200.50.152:3000/SHP')
+          .then(response => response.json())
+          .then(json => {
+            this.shp_hdwy = json.HEADER.hdwyDaily.performance
+            vm.shphdwypercent = vm.shp_hdwy_percent
+            this.shp_tph_am = json.HEADER.hdwyAm.trainsPerHour
+            vm.shptpham = vm.shp_tph_am_rounded
+            this.shp_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+            vm.shptphpm = vm.shp_tph_pm_rounded
+          })
+        )
+        .catch(err => { console.error('Request failed', err) })
+    },
+    fetchYUSData: function() {
+      fetch('http://10.200.50.152:3000/YUS')
+        .then(response => response.json())
+        .then(json => {
+          this.yus_hdwy = json.HEADER.hdwyDaily.performance
+          vm.yushdwypercent = vm.yus_hdwy_percent
+          this.yus_schadh = json.HEADER.schAdh.performance
+          vm.yusschadhpercent = vm.yus_schadh_percent
+          this.yus_tph_am = json.HEADER.hdwyAm.trainsPerHour
+          vm.yustpham = vm.yus_tph_am_rounded
+          this.yus_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+          vm.yustphpm = vm.yus_tph_pm_rounded
+        })
+    },
+    fetchBDData: function() {
+      fetch('http://10.200.50.152:3000/BD')
+        .then(response => response.json())
+        .then(json => {
+          this.bd_hdwy = json.HEADER.hdwyDaily.performance
+          vm.bdhdwypercent = vm.bd_hdwy_percent
+          this.bd_schadh = json.HEADER.schAdh.performance
+          vm.bdschadhpercent = vm.bd_schadh_percent
+          this.bd_tph_am = json.HEADER.hdwyAm.trainsPerHour
+          vm.bdtpham = vm.bd_tph_am_rounded
+          this.bd_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+          vm.bdtphpm = vm.bd_tph_pm_rounded
+        })
+    },
+    fetchSHPData: function() {
+      fetch('http://10.200.50.152:3000/SHP')
+        .then(response => response.json())
+        .then(json => {
+          this.shp_hdwy = json.HEADER.hdwyDaily.performance
+          vm.shphdwypercent = vm.shp_hdwy_percent
+          this.shp_tph_am = json.HEADER.hdwyAm.trainsPerHour
+          vm.shptpham = vm.shp_tph_am_rounded
+          this.shp_tph_pm = json.HEADER.hdwyPm.trainsPerHour
+          vm.shptphpm = vm.shp_tph_pm_rounded
+        })
+    },
+    updateYUSData: function() {
+      HdwyGaugeYUS.refresh(vm.yushdwypercent)
+      SAGaugeYUS.refresh(vm.yusschadhpercent)
+      vm.yustpham = vm.yus_tph_am_rounded
+      vm.yustphpm = vm.yus_tph_pm_rounded
+    },
+    updateBDData: function() {
+      HdwyGaugeBD.refresh(vm.bdhdwypercent)
+      SAGaugeBD.refresh(vm.bdschadhpercent)
+      vm.bdtpham = vm.bd_tph_am_rounded
+      vm.bdtphpm = vm.bd_tph_pm_rounded
+    },
+    updateSHPData: function() {
+      HdwyGaugeSHP.refresh(vm.shphdwypercent)
+      vm.shptpham = vm.shp_tph_am_rounded
+      vm_shptphpm = vm.shp_tph_pm_rounded
+    },
+    updateDate: function() {
+      vm.currentdate = vm.current_date;
+    }
+  }
+})
+
+HdwyGaugeYUS = new JustGage({
+  id: "yusHdwyGauge",
+  min: 90,
+  max: 100,
+  decimals: 1,
+  symbol: "%",
+  title: "YUS",
+  label: "Headway",
+  titleFontColor: "#FFFF00",
+  labelFontColor: "#FFFF00",
+  levelColors: ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#009933", "#009933", "#009933", "#009933"],
+  noGradient: true,
+  valueFontColor: "#FFFF00",
+  pointer: true,
+  pointerOptions: {
+    color: '#FFFFFF'
+  }
+});
+
+HdwyGaugeBD = new JustGage({
+  id: "bdHdwyGauge",
+  min: 90,
+  max: 100,
+  decimals: 1,
+  symbol: "%",
+  title: "BD",
+  label: "Headway",
+  titleFontColor: "#009933",
+  labelFontColor: "#009933",
+  levelColors: ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#009933", "#009933", "#009933"],
+  noGradient: true,
+  valueFontColor: "#009933",
+  pointer: true,
+  pointerOptions: {
+    color: '#FFFFFF'
+  }
+});
+
+HdwyGaugeSHP = new JustGage({
+  id: "shpHdwyGauge",
+  min: 90,
+  max: 100,
+  decimals: 1,
+  symbol: "%",
+  title: "Sheppard",
+  label: "Headway",
+  titleFontColor: "#660066",
+  labelFontColor: "#660066",
+  levelColors: ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#009933", "#009933"],
+  noGradient: true,
+  valueFontColor: "#660066",
+  pointer: true,
+  pointerOptions: {
+    color: '#FFFFFF'
+  }
+});
+
+SAGaugeYUS = new JustGage({
+  id: "yusSAGauge",
+  min: 30,
+  max: 100,
+  decimals: 1,
+  symbol: "%",
+  title: "YUS",
+  label: "Adherence",
+  titleFontColor: "#FFFF00",
+  labelFontColor: "#FFFF00",
+  levelColors: ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#009933"],
+  noGradient: true,
+  valueFontColor: "#FFFF00",
+  pointer: true,
+  pointerOptions: {
+    color: '#FFFFFF'
+  }
+});
+
+SAGaugeBD = new JustGage({
+  id: "bdSAGauge",
+  min: 30,
+  max: 100,
+  decimals: 1,
+  symbol: "%",
+  title: "BD",
+  label: "Adherence",
+  titleFontColor: "#009933",
+  labelFontColor: "#009933",
+  levelColors: ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#009933"],
+  noGradient: true,
+  valueFontColor: "#009933",
+  pointer: true,
+  pointerOptions: {
+    color: '#FFFFFF'
+  }
+});
+
+</script>
+</body>
+</html>

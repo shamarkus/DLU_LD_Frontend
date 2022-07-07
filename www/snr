@@ -1,0 +1,4709 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<meta charset="utf-8">
+
+<head>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+    <style>
+        #container {
+            height: 100%;
+            width: 100%;
+            display: flex;
+        }
+        
+        .line_m {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.0px;
+        }
+        
+        .line_s {
+            fill: none;
+            stroke: brown;
+            stroke-width: 1.0px;
+        }
+        
+        .line_s_l {
+            fill: none;
+            stroke: brown;
+            stroke-width: 1.0px;
+        }
+        
+        .line_l {
+            fill: none;
+            stroke: green;
+            stroke-width: 1.0px;
+        }
+        
+        .line_l_h {
+            fill: none;
+            stroke: green;
+            stroke-width: 1.0px;
+        }
+        
+        .line_l_l {
+            fill: none;
+            stroke: green;
+            stroke-width: 1.0px;
+        }
+        
+        .line_o {
+            fill: none;
+            stroke: tomato;
+            stroke-width: 1.0px;
+        }
+        
+        .crossover {
+            fill: none;
+            stroke: red;
+            stroke-width: 1.0px;
+        }
+        
+        .grid line {
+            stroke: lightgrey;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+        
+        .grid path {
+            stroke-width: 0;
+        }
+        
+        .outer {
+            width: 1340px;
+            height: 600px;
+            overflow: auto;
+        }
+        
+        .inner {
+            width: 1240px;
+            height: 700px;
+        }
+        
+        .outer_report {
+            width: 100%;
+            height: 1200px;
+            overflow: auto;
+        }
+        
+        .inner_report {
+            width: 100%;
+            height: 1200px;
+        }
+        
+        .zoom {
+            cursor: move;
+            fill: none;
+            pointer-events: all;
+        }
+        
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+        
+        fileUpload {}
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            <!-- border-bottom: 1px dotted black;
+            -->
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 280px;
+            background-color: #555;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 5px 5px;
+            /* Position the tooltip */
+            position: absolute;
+            z-index: 1;
+            top: -5px;
+            left: 105%;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #report * {
+                visibility: visible;
+            }
+            #report {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+            #print_button {
+                display: none;
+            }
+            #graph * {
+                <!-- visibility: visible;
+                -->
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <p style="font-size: 20px"><b>Upload CSV File</b></p>
+    <button id="show_upload" onclick="show_upload()">Hide</button>
+    <div id="upload_div">
+        <br>
+        <div id="upload_buttons">
+            <button onclick="restart()">Clear All</button>
+            <button id="add_file" onclick="add_file()">Add File</button>
+            <button id="remove_file" onclick="remove_file()">Remove File</button>
+            <br>
+            <br>
+            <input type="file" id="fileUpload1" class="fileUpload" />
+        </div>
+
+        <br>
+        <input type="button" id="upload" value="Upload" onclick="Upload('none')" />
+        <p style="color:red; display:inline;">*</p>
+    </div>
+
+    <br>
+    <hr>
+
+    <p style="font-size: 20px"><b>Analysis</b></p>
+    <button id="show_analysis" style="display:none;" onclick="show_analysis()">Hide</button>
+    <div id="analysis">
+        <br>
+        <p id="csv_plot_title" style="font-size: 16px">CSV Plot</p>
+
+        <div id="past_graphs" style="display: none;">
+            <p>View CSV file:</p>
+        </div>
+
+        <p>x-axis represents Distance (m), y-axis represents Signal Strength (dBm)</p>
+
+        <!-- <input type="checkbox" id="show_settings" name="show_settings" value="Bike" onclick="display_settings()"> -->
+        <!-- <label for="show_settings"> Show Settings</label><br> -->
+
+        <div id="container">
+            <div>
+                <div style="margin-left: 40px; margin-right: 15px;">
+                    <p id="display_th_high">Threshold max (abs):</p>
+                    <button onclick="change_threshold_high(-5)">--</button>
+                    <button onclick="change_threshold_high(-1)">-</button>
+                    <button onclick="change_threshold_high(1)">+</button>
+                    <button onclick="change_threshold_high(5)">++</button>
+                </div>
+
+                <div style="margin-left: 40px; margin-right: 15px;">
+                    <p id="display_th_low">Threshold min (abs):</p>
+                    <button onclick="change_threshold_low(-5)">--</button>
+                    <button onclick="change_threshold_low(-1)">-</button>
+                    <button onclick="change_threshold_low(1)">+</button>
+                    <button onclick="change_threshold_low(5)">++</button>
+                </div>
+            </div>
+            <div>
+                <div style="margin-right: 15px;">
+                    <p id="crossover_l">Threshold min (crossover):</p>
+                    <button onclick="update_crossover_l(-5)">--</button>
+                    <button onclick="update_crossover_l(-1)">-</button>
+                    <button onclick="update_crossover_l(1)">+</button>
+                    <button onclick="update_crossover_l(5)">++</button>
+                </div>
+            </div>
+            <div>
+                <div style="margin-right: 15px;">
+                    <p id="lh_h">Threshold max (low/high):</p>
+                    <button onclick="update_lh_h(-5)">--</button>
+                    <button onclick="update_lh_h(-1)">-</button>
+                    <button onclick="update_lh_h(1)">+</button>
+                    <button onclick="update_lh_h(5)">++</button>
+                </div>
+
+                <div style="margin-right: 15px;">
+                    <p id="lh_l">Threshold min (low/high):</p>
+                    <button onclick="update_lh_l(-5)">--</button>
+                    <button onclick="update_lh_l(-1)">-</button>
+                    <button onclick="update_lh_l(1)">+</button>
+                    <button onclick="update_lh_l(5)">++</button>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin-right: 15px;">
+                    <p id="moving_avg_display_m">Moving average (modified):</p>
+                    <button onclick="moving_avg(-10,'m')">--</button>
+                    <button onclick="moving_avg(-2,'m')">-</button>
+                    <button onclick="moving_avg(2,'m')">+</button>
+                    <button onclick="moving_avg(10,'m')">++</button>
+                </div>
+
+                <div style="margin-right: 15px;">
+                    <p id="moving_avg_display_s">Moving average (crossover):</p>
+                    <button onclick="moving_avg(-10,'s')">--</button>
+                    <button onclick="moving_avg(-2,'s')">-</button>
+                    <button onclick="moving_avg(2,'s')">+</button>
+                    <button onclick="moving_avg(10,'s')">++</button>
+                </div>
+
+                <div style="margin-right: 15px;">
+                    <p id="moving_avg_display_l">Moving average (low/high):</p>
+                    <button onclick="moving_avg(-200,'l')">---</button>
+                    <button onclick="moving_avg(-10,'l')">--</button>
+                    <button onclick="moving_avg(-2,'l')">-</button>
+                    <button onclick="moving_avg(2,'l')">+</button>
+                    <button onclick="moving_avg(10,'l')">++</button>
+                    <button onclick="moving_avg(200,'l')">+++</button>
+                </div>
+            </div>
+
+            <div style="margin-right: 15px;">
+                <p id="consecutive_display">Persistency:</p>
+                <button onclick="change_consecutive(-5)">--</button>
+                <button onclick="change_consecutive(-1)">-</button>
+                <button onclick="change_consecutive(1)">+</button>
+                <button onclick="change_consecutive(5)">++</button>
+            </div>
+
+            <div style="margin-right: 15px;">
+                <p style="color: white;">.</p>
+
+                <button onclick="find_loops()">Find loops</button>
+                <button onclick="analyze_loops()">Analyze loops</button>
+
+                <br>
+                <br>
+                <button onclick="find_lh()">Find low/high signal</button>
+
+                <br>
+                <br>
+                <button onclick="find_crossover()">Find Crossovers</button>
+            </div>
+
+            <div style="margin-right: 30px;">
+                <br>
+                <input type="checkbox" id="graph_o" name="graph_o" value="Bike" onclick="draw_data()">
+                <label for="graph_o"> Show original data</label><br>
+
+                <input type="checkbox" id="graph_m" name="graph_m" value="Bike" onclick="draw_data()">
+                <label for="graph_m"> Show moving average data (modified)</label><br>
+
+                <input type="checkbox" id="graph_s" name="graph_s" value="Bike" onclick="draw_data()">
+                <label for="graph_s"> Show moving average data (crossover)</label><br>
+
+                <div style="margin-left: 30px; margin-right: 15px;">
+                    <input type="checkbox" id="graph_s_th" name="graph_s_th" value="Bike" onclick="draw_data()">
+                    <label for="graph_s_th"> Show threshold</label><br>
+
+                    <input type="checkbox" id="graph_s_c" name="graph_s_c" value="Bike" onclick="draw_data()">
+                    <label for="graph_s_c"> Show center</label><br>
+                </div>
+
+                <input type="checkbox" id="graph_l" name="graph_l" value="Bike" onclick="draw_data()">
+                <label for="graph_l"> Show moving average data (low/high)</label><br>
+
+                <div style="margin-left: 30px; margin-right: 15px;">
+                    <input type="checkbox" id="graph_l_th" name="graph_l_th" value="Bike" onclick="draw_data()">
+                    <label for="graph_l_th"> Show threshold</label><br>
+
+                    <input type="checkbox" id="graph_l_c" name="graph_l_c" value="Bike" onclick="draw_data()">
+                    <label for="graph_l_c"> Show center</label><br>
+                </div>
+            </div>
+
+            <div>
+                <br>
+                <input type="checkbox" id="abs_th" name="abs_th" value="Bike" onclick="draw_threshold()">
+                <label for="abs_th"> Show threshold (abs)</label><br>
+
+                <input type="checkbox" id="graph_cursor" name="graph_cursor" value="Bike">
+                <label for="graph_cursor"> Show cursor</label><br>
+            </div>
+
+        </div>
+
+        <svg id="graph" width="1300" height="500"></svg>
+
+
+        <div id="loop_num_div">
+            <label for="input_loop_num" id="enter_loop_label">Enter loop number (highlighted in red)</label>
+            <p style="color:red; display:inline;">*</p>
+            <input type="string" id="input_loop_num" name="input_loop_num" min="0">
+            <input id="input_loop_submit" type="submit" onclick="input_loop()">
+            <div class="tooltip">
+                <button>?</button>
+                <span class="tooltiptext">Examples (without the quotations):<br>
+											* Entering a loop: "5"<br>
+											* Entering multiple loops: "5,8,3"<br>
+											* Ignoring a loop: "-"</span>
+            </div>
+            <br>
+            <br>
+            <div>
+                <p id="loop_list" style="display:inline">Loops:</p>
+                <button id="remove_loop" style="display:inline" onclick="remove_loop()">Back</button>
+            </div>
+            <br>
+        </div>
+
+        <input type="checkbox" id="show_table" name="show_table" value="Bike" onclick="show_table()">
+        <label for="show_table"> Show CSV Table</label><br>
+
+        <div id="outer_graph" class="outer">
+            <!-- <hr> -->
+            <!-- <br> -->
+            <p id="csv_table_title" style="font-size: 16px">CSV Table</p>
+            <div id="inner_graph" class="inner">
+                <table id="myTable" style="margin-left: 40px">
+                </table>
+            </div>
+
+        </div>
+
+        <div id="outer_csv_info" class="outer" style="display:none;">
+            <div id="inner_csv_info" class="inner">
+                <p style="font-size: 20px"><b>CSV File Info</b></p>
+                <table id="csv_info_table" style="margin-left: 40px">
+                </table>
+            </div>
+        </div>
+
+        <hr style="display:none;">
+        <br style="display:none;">
+
+        <div id="outer_graph3" class="outer" style="display:none;">
+            <div id="inner_graph3" class="inner">
+                <p style="font-size: 20px"><b>Low/High Signal Strength</b></p>
+                <table id="table_lh" style="margin-left: 40px">
+                </table>
+            </div>
+        </div>
+
+        <div id="loops_outer" class="outer" style="display:none;">
+            <div id="loops_inner" class="inner">
+                <p style="font-size: 20px"><b>Loops</b></p>
+                <table id="table_loops" style="margin-left: 40px">
+                </table>
+            </div>
+        </div>
+    </div>
+    <br>
+    <hr>
+
+    <p style="font-size: 20px"><b>Report</b></p>
+    <button id="show_report" style="display:none;" onclick="show_report()">Hide</button>
+    <div id="report">
+        <!-- <div id="outer_report" class="outer_report"> -->
+        <!-- <div id="inner_report" class="inner_report"> -->
+        <br>
+        <button id="print_button" onclick="window.print()">Print this page</button>
+        <p style="size:16px"><b><u>Measurements</u></b></p>
+        <p>Signal Strength was measured for each loop as the average strength when powered ON</p>
+        <p>Noise was measured for each loop as the average strength when powered OFF</p>
+        <br>
+
+        <p style="size:16px"><b><u>Measured Results</u></b></p>
+        <table id="table_loops_report" style=""></table>
+        <br>
+
+        <p style="size:16px"><b><u>Understanding SNR Traces</u></b></p>
+        <p>Y axis is the signal strength or noise level in dBm</p>
+        <p>X axis is the distance in m</p>
+        <p>Signal disturbances are noted</p>
+        <p>Loop numbers and longitude/latitude are identified</p>
+        <br>
+
+        <p style="size:16px"><b><u>Observations</u></b></p>
+
+        <!-- </div> -->
+        <!-- </div> -->
+    </div>
+
+
+    <script>
+        // CHANGE THESE VARIABLES TO CHANGE SETTINGS
+        var threshold_low_onoff = 20; // For differentiating powered ON / powered OFF loops. Value indicates dBm translation down from powered ON
+        var threshold_high_onoff = 20;
+        var consecutive_onoff = 10; // Number of poitns of modified signal in a row beyond threshold to toggle between powered ON / powered OFF
+        var threshold_low_lh = 5; // For identifying low signal areas. Value indicates dBm translation down from powered ON
+        var threshold_high_lh = 5; // For identifying high signal areas. Value indicates dBm translation down from powered ON
+        var consecutive_lh = 5; // Number of poitns of modified signal in a row beyond threshold to toggle between normal signal strength / low/high signal strength
+
+
+        //
+        var freq_data = [];
+        var freq_data_s = []; // Small moving average
+        var freq_data_l = []; // Large moving average
+        var freq_data_original = [];
+        var crossover_l = []; // Crossover - low threshold
+        var lh_h = []; // Low/high area - upper threshold
+        var lh_l = []; // Low/high area - lower threshold
+        //
+        var table;
+        var data_table;
+        //
+        var svg;
+        var svg_r; // svg for the report
+        var margin;
+        var margin2;
+        var width;
+        var height;
+        var height2;
+        var x;
+        var x2;
+        var y;
+        var y2;
+        var graph_extra;
+        var x_Axis;
+        var x_Axis2;
+        var y_Axis;
+        var brush;
+        var zoom;
+        var line;
+        var line2;
+        var clip;
+        var Line_chart;
+        var focus;
+        var context;
+        var x_axis_drawing;
+        var y_axis_drawing;
+        var x_grid_drawing;
+        var y_grid_drawing;
+        var graph_line;
+        var graph_line2;
+        var graph_line_s;
+        var graph_line2_s;
+        var graph_line_l;
+        var graph_line2_l;
+        var graph_line_s_l;
+        var graph_line2_s_l;
+        var graph_line_l_h;
+        var graph_line2_l_h;
+        var graph_line_l_l;
+        var graph_line2_l_l;
+        var x_axis2_drawing;
+        var moving_num = 5;
+        var moving_num_s = 1;
+        var moving_num_l = 201;
+        var new_data; // Boolean value
+        var line_upper;
+        var line_lower;
+        var graph_count = 0;
+        var rectangle;
+
+        //
+        var y_max;
+        var y_min;
+        var y_range;
+        var threshold_high = -20;
+        var threshold_low = -60;
+        var threshold_l_c = 10;
+        var threshold_l_h = 20;
+        var threshold_l_l = 20;
+        var max_height;
+        var min_height;
+        var normal_strength;
+        var num_transitions = 0;
+        var state = [];
+        var consecutive = 5;
+        var begin_index = [];
+        var end_index = [];
+        var max_signal = []; // For single high/low
+        var min_signal = []; // For single high/low
+        var begin_index_on = [];
+        var end_index_on = [];
+        var max_signal_on = []; // For single high/low
+        var min_signal_on = []; // For single high/low
+        var begin_index_off = [];
+        var end_index_off = [];
+        var max_signal_off = []; // For single high/low
+        var min_signal_off = []; // For single high/low
+        var rect_margin = 10;
+        var threshold_avg;
+        var graph_line_org;
+        var graph_line2_org;
+        var org_display = false;
+        var toggle_org = false;
+        var file_type; // 0span or frequency
+        var freq_max;
+        var freq_min;
+        var freq_original_max;
+        var freq_original_min;
+        var bar_width;
+        var progress_pct = 10; // Percent width of screen
+        var loop_state = [];
+
+        //CC
+        var range_bound = [];
+        var range_outline_start = [];
+        var range_outline_end = [];
+        var range_start = [];
+        var range_end = [];
+        var x_dist = [];
+        var x_dist_x = [];
+
+        var focusText;
+        var bisect;
+        var svg_rect;
+        var focus_pnt;
+        var hide_cursor;
+        var focusText_o;
+        var focus_pnt_o;
+        var focusText_s;
+        var focus_pnt_s;
+        var focusText_l;
+        var focus_pnt_l;
+        var uploaded_first_graph = false;
+
+        var bucket_num; // Number of buckets
+        var bucket_time = [];
+        var trace_signal = []; // All signals for a single trace - for 0span mode
+        var date;
+        var time;
+        var date_time;
+        var index_space;
+        var moving_avg_col;
+
+        var row_counter = 0;
+        var num_rows;
+        var center_freq;
+        var center_col_index;
+        var center_col;
+        var new_file;
+        var csv_info_table;
+
+        var crossover_list = []; //[x][y]
+        var loop_num = [];
+        var loop_num_raw = []; // [begin index][end index][loop #] -- used to store raw input and unmodified begin/end index data
+        var avg_power = []; //[loop][loop #,on/off,sum,points,avg power]
+
+        var longitude = [];
+        var latitude = [];
+        var elevation = [];
+
+        var num_files = 1;
+        var file_to_analyze = 1;
+
+        var file_name;
+
+
+        // Declare
+        partial_reset();
+
+        // Reset some variables for a new file upload
+        function partial_reset() {
+            //
+            freq_data = [];
+            freq_data_s = []; // Small moving average
+            freq_data_l = []; // Large moving average
+            freq_data_original = [];
+            crossover_l = []; // Crossover - low threshold
+            lh_h = []; // Low/high area - upper threshold
+            lh_l = []; // Low/high area - lower threshold
+            //
+            table = "";
+            data_table = "";
+            //
+            svg = "";
+            svg_r = ""; // svg for the report
+            margin = "";
+            margin2 = "";
+            width = "";
+            height = "";
+            height2 = "";
+            x = "";
+            x2 = "";
+            y = "";
+            y2 = "";
+            graph_extra = "";
+            x_Axis = "";
+            x_Axis2 = "";
+            y_Axis = "";
+            brush = "";
+            zoom = "";
+            line = "";
+            line2 = "";
+            clip = "";
+            Line_chart = "";
+            focus = "";
+            context = "";
+            x_axis_drawing = "";
+            y_axis_drawing = "";
+            x_grid_drawing = "";
+            y_grid_drawing = "";
+            graph_line = "";
+            graph_line2 = "";
+            graph_line_s = "";
+            graph_line2_s = "";
+            graph_line_l = "";
+            graph_line2_l = "";
+            graph_line_s_l = "";
+            graph_line2_s_l = "";
+            graph_line_l_h = "";
+            graph_line2_l_h = "";
+            graph_line_l_l = "";
+            graph_line2_l_l = "";
+            x_axis2_drawing = "";
+            moving_num = 5;
+            moving_num_s = 1;
+            moving_num_l = 201;
+            new_data = ""; // Boolean value
+            line_upper = "";
+            line_lower = "";
+            graph_count = 0;
+            rectangle = "";
+
+            //
+            y_max = "";
+            y_min = "";
+            y_range;
+            threshold_high = -20;
+            threshold_low = -60;
+            threshold_l_c = 10;
+            threshold_l_h = 20;
+            threshold_l_l = 20;
+            max_height = "";
+            min_height = "";
+            normal_strength = "";
+            num_transitions = 0;
+            state = [];
+            consecutive = 5;
+            begin_index = [];
+            end_index = [];
+            max_signal = []; // For single high/low
+            min_signal = []; // For single high/low
+            begin_index_on = [];
+            end_index_on = [];
+            max_signal_on = []; // For single high/low
+            min_signal_on = []; // For single high/low
+            begin_index_off = [];
+            end_index_off = [];
+            max_signal_off = []; // For single high/low
+            min_signal_off = []; // For single high/low
+            rect_margin = 10;
+            threshold_avg = "";
+            graph_line_org = "";
+            graph_line2_org = "";
+            org_display = false;
+            toggle_org = false;
+            file_type = ""; // 0span or frequency
+            freq_max = "";
+            freq_min = "";
+            freq_original_max = "";
+            freq_original_min = "";
+            bar_width = "";
+            progress_pct = 10; // Percent width of screen
+            loop_state = [];
+
+            focusText = "";
+            bisect = "";
+            svg_rect = "";
+            focus_pnt = "";
+            hide_cursor = "";
+            focusText_o = "";
+            focus_pnt_o = "";
+            focusText_s = "";
+            focus_pnt_s = "";
+            focusText_l = "";
+            focus_pnt_l = "";
+            uploaded_first_graph = false;
+
+            bucket_num = ""; // Number of buckets
+            bucket_time = [];
+            trace_signal = []; // All signals for a single trace - for 0span mode
+            date = "";
+            time = "";
+            date_time = "";
+            index_space = "";
+            moving_avg_col = "";
+
+            row_counter = 0;
+            num_rows = "";
+            center_freq = "";
+            center_col_index = "";
+            center_col = "";
+            new_file = "";
+            csv_info_table = "";
+
+            longitude = [];
+            latitude = [];
+            elevation = [];
+
+            crossover_list = []; //[x][y]
+            loop_num = [];
+
+            //CC
+            range_bound = [];
+            range_outline_start = [];
+            range_outline_end = [];
+            range_start = [];
+            range_end = [];
+            x_dist = [];
+            x_dist_x = [];
+
+
+            // Check box setup
+            document.getElementById("graph_cursor").checked = true;
+            document.getElementById("graph_m").checked = true;
+            document.getElementById("graph_s_c").checked = true;
+            document.getElementById("graph_s_th").checked = true;
+            document.getElementById("graph_l_c").checked = true;
+            document.getElementById("graph_l_th").checked = true;
+            //document.getElementById("abs_th").checked = true;
+
+            // Page layout setup
+            display_settings();
+            document.getElementById("analysis").style.display = "none";
+            //document.getElementById("container").style.display = "none";
+            document.getElementById("report").style.display = "none";
+            document.getElementById("show_report").innerHTML = "Show";
+
+
+            //
+            test_graph();
+        }
+
+        // Draws an invisible sample graph to set up for graphing CSV data
+        function test_graph() {
+            // Sample output - page first opened
+            freq_data = [-30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30];
+            freq_data_original = [-30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30, -47, -80, -30];
+            //
+            var table = document.getElementById("myTable");
+
+            //
+            for (var i = 0; i < 19; i++) {
+                //
+                var row = table.insertRow(-1);
+                //
+                for (var j = 0; j < 3; j++) {
+                    if (j == 0) {
+                        var cell = row.insertCell(-1);
+                        //cell.innerHTML = i;
+                    } else if (j == 1) {
+                        var cell = row.insertCell(-1);
+                        //cell.innerHTML = " -";
+                    } else {
+                        var cell = row.insertCell(-1);
+                        //cell.innerHTML = freq_data[i];
+                    }
+                }
+            }
+            //
+            graph_count += 1;
+
+            //
+            update_max_min();
+            //
+            update_data("upload");
+        }
+
+        // Allow loop number to be entered using 'enter' key
+        var input = document.getElementById("input_loop_num");
+        input.addEventListener("keyup", function(event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                input_loop();
+                //document.getElementById("myBtn").click();
+            }
+        });
+
+        // Extract CSV file data and call other functions for analysis
+        function Upload(input_file) { // input_file is 'none' for no input
+            var fileUpload;
+
+            // Regular upload
+            if (input_file.substring(0, 10) != "fileUpload") {
+                fileUpload = document.getElementById("fileUpload" + file_to_analyze);
+            } else { // View previous CSV file
+                fileUpload = document.getElementById(input_file);
+                partial_reset();
+            }
+            var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+            if (regex.test(fileUpload.value.toLowerCase())) {
+                if (typeof(FileReader) != "undefined") {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        //
+                        new_file = true;
+
+                        //
+                        table = document.getElementById("myTable");
+                        csv_info_table = document.getElementById("csv_info_table");
+                        var rows = e.target.result.split("\n");
+                        //var test_array = [1, 2, 3, 4, 5];
+                        freq_data = [];
+                        freq_data_l = [];
+                        freq_data_s = [];
+                        freq_data_original = [];
+                        crossover_l = [];
+                        lh_h = [];
+                        lh_l = [];
+
+                        //
+                        bar_width = 0;
+
+                        //declare variables
+                        var table_valid = false;
+
+                        // Determine if table is appropriate size
+                        if (rows.length >= 18) {
+                            var cells = rows[16].split(",");
+
+                            if (cells.length >= 6) {
+                                table_valid = true;
+                            }
+                        }
+
+                        <!-- Display relevant CSV data as a table -->
+                        if (true == table_valid) {
+                            // extract center frequency / sweep time
+                            var cells = rows[14].split(",");
+                            center_freq = cells[2].substring(13);
+
+                            // Find csv file type
+                            file_type = cells[1];
+                            // Rename file type (0span or frequency)
+                            if (file_type == "Frequency Scan") {
+                                file_type = "frequency";
+                            } else if (file_type == "ZeroSpan Time Scan") {
+                                file_type = "0span";
+                            }
+
+                            // find the center frequency column
+                            if (file_type == "frequency") {
+                                var cells = rows[16].split(",");
+                                for (var i = 5; i < cells.length; i++) {
+                                    if (cells[i] == center_freq) {
+                                        center_col_index = i;
+                                        center_col = i - 4;
+                                    }
+                                }
+                            }
+
+
+                            // Frequency file type
+                            if (file_type == "frequency") {
+                                //
+                                var index_data = 0;
+
+                                // Extract signal and GPS data
+                                for (var i = 18; i < rows.length; i++) {
+                                    // Save columns (in current row)
+                                    var cells = rows[i].split(",");
+
+                                    // End of file reached - break to stop extracting data
+                                    if (cells[0].substr(0, 3) == "END") {
+                                        break;
+                                    }
+
+				    if (cells[0] && cells[5]) {
+					// Retrieve GPS coordinates for each point
+                                	longitude[index_data] = cells[2];
+                                        latitude[index_data] = cells[3];
+                               		elevation[index_data] = cells[4];
+
+                                    	// Extract raw signal data and initialize moving averages
+                                   	 freq_data[index_data] = cells[center_col_index];
+                                    	freq_data_s[index_data] = freq_data[index_data];
+                                    	freq_data_l[index_data] = freq_data[index_data];
+                                    	freq_data_original[index_data] = freq_data[index_data];
+
+                                    	// Calculate initial thresholds
+                                    	crossover_l[index_data] = +freq_data_s[index_data] - threshold_l_c;
+                                    	lh_h[index_data] = +freq_data_l[index_data] + threshold_l_h;
+                                    	lh_l[index_data] = +freq_data_l[index_data] - threshold_l_l;
+
+                                    	// Increment data point to examine
+                                    	index_data = index_data + 1;
+				    }
+
+                                }
+
+                            }
+                            // 0span file type
+                            else if (file_type == "0span") {
+                                //
+                                var index_data = 0;
+                                var sum = 0;
+                                var last_lon = 0;
+                                var last_lat = 0;
+
+                                // Calculate bucket number
+                                var cells = rows[16].split(",");
+                                bucket_num = cells.length - 5;
+
+                                // Extract signal and GPS data
+                                for (var i = 18; i < rows.length; i++) {
+                                    // Save columns (in current row)
+                                    var cells = rows[i].split(",");
+
+                                    // End of file reached - break to stop extracting data
+                                    if (cells[0].substr(0, 3) == "END") {
+                                        break;
+                                    }
+
+                                    //debug
+                                    //if (i > 6300 && i < 6400) {
+                                      //  console.log(i, cells[0], cells[5])
+                                    //}
+                                     
+                                    if (cells[0] && cells[5]) {
+                                    	//for (var j=0 ; j < bucket_num ; j++)
+                                    	for (var j = 0; j < 1; j++) {
+                                        	// Retrieve GPS coordinates for each point
+                                        	longitude[index_data] = cells[2];
+                                        	latitude[index_data] = cells[3];
+                                        	elevation[index_data] = cells[4];
+
+                                        	//
+                                        	freq_data[index_data] = cells[j + 5];
+                                        	freq_data_s[index_data] = freq_data[index_data];
+                                        	freq_data_l[index_data] = freq_data[index_data];
+                                        	freq_data_original[index_data] = freq_data[index_data];
+
+                                        	//
+                                        	crossover_l[index_data] = +freq_data_s[index_data] - threshold_l_c;
+                                        	lh_h[index_data] = +freq_data_l[index_data] + threshold_l_h;
+                                        	lh_l[index_data] = +freq_data_l[index_data] - threshold_l_l;
+
+                                        	// Calculate the distance
+
+                                        	//longitude in decimal degrees
+                                        	var lon_raw = longitude[index_data].split(" ");
+                                        	var lon = (1 * lon_raw[0]) + (lon_raw[1] / 60);
+                                        	if (lon_raw[2] === "W") lon = -lon;
+                                        	//latitude in decimal degrees
+                                        	var lat_raw = latitude[index_data].split(" ");
+                                        	var lat = (1 * lat_raw[0]) + (lat_raw[1] / 60);
+                                        	if (lat_raw[2] === "S") lat = -lat;
+
+	                                        if (+last_lon != 0) {
+        	                                    sum += +cal_distance(last_lon, last_lat, lon, lat);
+                	                            x_dist.push({
+                        	                        dist: sum,
+                                	                freq: freq_data[index_data]
+                                        	    });
+                                        	    x_dist_x.push(sum);
+                                        	}	
+
+	                                        last_lon = lon;
+        	                                last_lat = lat;
+
+	                                        // Increment data point to examine
+        	                                index_data = +index_data + 1;
+					   }
+                               	    }
+                                }
+                            }
+			    console.log(x_dist.length)
+
+                            // Disable upload buttons - must 'clear all' to upload new files
+                            disable_upload();
+
+                            // Extract file name
+                            file_name = fileUpload.value.replace(/^.*[\\\/]/, '');
+
+                            // Find and store the max and min of modified and original signal strength
+                            update_max_min();
+
+                            // Set default values
+                            moving_num = 5;
+                            moving_num_l = 201;
+                            graph_count += 1;
+
+                            // Modify settings for finding low/high areas
+                            var change = threshold_high_onoff - threshold_l_h; // Calculation to get threshold_l_h = 20, when passed to update_lh_h
+                            update_lh_h(change);
+                            var change = threshold_low_onoff - threshold_l_l;
+                            update_lh_l(change);
+
+                            // Modify settings for finding loops
+                            var change = consecutive_onoff - consecutive;
+                            change_consecutive(change);
+
+                            //
+                            update_data("upload");
+
+                            // Regular upload
+                            if (input_file.substring(0, 10) != "fileUpload") {                           
+				find_loops();
+                                find_crossover(); //CC
+                                // Upload section
+                                document.getElementById("upload_div").style.display = "none";
+                                document.getElementById("show_upload").innerHTML = "Show";
+                                // Analysis section
+                                document.getElementById("show_analysis").style.display = "block";
+                                document.getElementById("analysis").style.display = "inline";
+                                //document.getElementById("container").style.display = "block"; // CC added
+                                document.getElementById("outer_graph").style.display = "none";
+
+                                // Add previous graph button - so user can view previous CSV graph later
+                                add_prev_graph();
+
+                                //
+                                file_to_analyze += +1;
+                                //
+                                update_CSV_table();
+
+                                // Select input loop field automatically
+                                document.getElementById("input_loop_num").focus();
+                                document.getElementById("input_loop_num").select();
+                            }
+                            // Viewing previous file
+                            else {
+                                find_loops();
+                                find_crossover(); //CC
+
+                                // Modify settings for finding low/high areas
+                                var change = threshold_high_lh - threshold_l_h; // Calculation to get threshold_l_h = 5, when passed to update_lh_h
+                                update_lh_h(change);
+                                var change = threshold_low_lh - threshold_l_l;
+                                update_lh_l(change);
+
+                                // Modify settings for finding loops
+                                var change = consecutive_lh - consecutive;
+                                change_consecutive(change);
+
+
+                                //analyze_loops();
+                                find_lh("prev"); 
+
+                                // Show analysis section
+                                document.getElementById("analysis").style.display = "inline";
+                            }
+
+                            // Add CSV file name
+                            update_analysis();
+                        }
+                    }
+                    reader.readAsText(fileUpload.files[0]);
+                } else {
+                    alert("This browser does not support HTML5.");
+                }
+            } else {
+                alert("Please upload a valid CSV file.");
+            }
+        }
+
+
+        // Add previous graph button - so user can view previous CSV graph later
+        function add_prev_graph() {
+            // File to upload
+            var file = "fileUpload" + file_to_analyze;
+
+            // Add previous graph button - so user can view later
+            var prev_graph_button = document.createElement("input");
+            prev_graph_button.setAttribute("type", "button");
+            prev_graph_button.setAttribute("id", "prev_graph_button" + file_to_analyze);
+            prev_graph_button.setAttribute("class", "button");
+            prev_graph_button.setAttribute("display", "inline-block");
+            prev_graph_button.setAttribute("margin-left", "30px");
+            prev_graph_button.setAttribute("value", file_name);
+            prev_graph_button.setAttribute("onclick", "Upload('" + file + "')");
+
+            // Add button to page
+            document.getElementById("past_graphs").appendChild(prev_graph_button);
+        }
+
+        // Update table displaying relevant CSV file data
+        function update_CSV_table() {
+            var fileUpload = document.getElementById("fileUpload" + (+file_to_analyze - 1));
+            var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+            if (regex.test(fileUpload.value.toLowerCase())) {
+                if (typeof(FileReader) != "undefined") {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+
+                        //
+                        if (true == new_file) {
+                            d3.selectAll("#myTable > *").remove();
+                            row_counter = 0;
+                        }
+
+                        // Find HTML table and split CSV file by rows
+                        table = document.getElementById("myTable");
+                        data_table = document.getElementById("data_table");
+                        var rows = e.target.result.split("\n");
+
+                        //
+                        bar_width = 0;
+
+
+
+                        // Frequency file type
+                        if (file_type == "frequency") {
+                            // Extract center frequency
+                            var cells = rows[14].split(",");
+                            var center_freq = cells[2].substring(13);
+
+                            // Update CSV info table
+                            <!-- for (var i=0 ; i < 17 ; i++) -->
+                            <!-- { -->
+                            <!-- // -->
+                            <!-- var row = csv_info_table.insertRow(-1); -->
+
+                            <!-- // -->
+                            <!-- var cells = rows[i].split(","); -->
+                            <!-- // -->
+                            <!-- for (var j=0 ; j < 4 ; j++) -->
+                            <!-- { -->
+                            <!-- // -->
+                            <!-- var cell = row.insertCell(-1); // Insert cell -->
+
+                            <!-- // -->
+                            <!-- if (cells[j] != null) -->
+                            <!-- { -->
+                            <!-- cell.innerHTML = cells[j]; -->
+                            <!-- } -->
+                            <!-- } -->
+                            <!-- } -->
+
+                            //
+                            var index_data = 0;
+
+                            // Calculate bucket number
+                            var cells = rows[16].split(",");
+                            //bucket_num = cells.length - 5;
+                            // Extract bucket times
+                            <!-- for (var i = 0; i < cells.length - 5 ; i++) -->
+                            <!-- { -->
+                            <!-- bucket_time[i] = cells[i+5]; -->
+                            <!-- } -->
+
+                            // Add titles
+                            if (true == new_file) {
+                                // Add titles
+                                var row = table.insertRow(-1);
+                                //
+                                for (i = 0; i < 8; i++) {
+                                    var cell = row.insertCell(-1); // Insert cell
+                                    if (i == 0) {
+                                        cell.innerHTML = "Trace #";
+                                    } else if (i == 1) {
+                                        cell.innerHTML = "Date";
+                                    } else if (i == 2) {
+                                        cell.innerHTML = "Time (HH:MM:SS)";
+                                    } else if (i == 3) {
+                                        cell.innerHTML = "Longitude";
+                                    } else if (i == 4) {
+                                        cell.innerHTML = "Latitude";
+                                    } else if (i == 5) {
+                                        cell.innerHTML = "Elevation";
+                                    } else if (i == 6) {
+                                        cell.innerHTML = "Strength (dBm)";
+                                    } else if (i == 7) {
+                                        cell.innerHTML = "Strength (dBm) Moving Average";
+                                        moving_avg_col = i;
+                                    }
+                                }
+                            }
+
+                            //
+                            var next_batch = true;
+
+                            // Insert to table and extract data
+                            for (var i = row_counter + 18; i < rows.length && (row_counter % 3000 != 0 || true == next_batch); i++) {
+                                //
+                                next_batch = false;
+
+                                // Save columns (in current row)
+                                var cells = rows[i].split(",");
+
+                                //
+                                if (cells[0].substr(0, 3) == "END") {
+                                    break;
+                                }
+
+
+                                // Insert row
+                                var row = table.insertRow(-1);
+
+                                // Insert columns
+                                for (var k = 0; k < 8; k++) {
+                                    var cell = row.insertCell(-1); // Insert cell
+
+                                    // Copy directly
+                                    if (k == 0) {
+                                        cell.innerHTML = cells[k]; // Modify cell
+                                    } else if (k == 1) {
+                                        date_time = cells[1];
+                                        index_space = date_time.indexOf(' ');
+
+                                        date = date_time.substr(0, index_space);
+                                        cell.innerHTML = date; // Modify cell
+                                    } else if (k == 2) {
+                                        var date_time = cells[1];
+                                        var index_space = date_time.indexOf(' ');
+
+                                        time = date_time.substr(index_space + 1);
+                                        cell.innerHTML = time; // Modify cell
+                                    } else if (k == 3) {
+                                        var longitude = cells[2];
+                                        if (longitude.length > 0) {
+                                            cell.innerHTML = longitude;
+                                        }
+                                    } else if (k == 4) {
+                                        var latitude = cells[3];
+                                        if (latitude.length > 0) {
+                                            cell.innerHTML = latitude;
+                                        }
+                                    } else if (k == 5) {
+                                        var elevation = cells[4];
+                                        if (elevation.length > 0) {
+                                            cell.innerHTML = elevation;
+                                        }
+                                    } else if (k == 6) {
+                                        cell.innerHTML = freq_data_original[index_data];
+                                    } else if (k == 7) {
+                                        cell.innerHTML = freq_data[index_data];
+                                    }
+
+                                }
+
+                                //
+                                index_data = index_data + 1;
+                                row_counter++;
+                            }
+
+                        }
+                        // 0span file type
+                        else if (file_type == "0span") {
+                            // Update CSV info table
+                            <!-- for (var i=0 ; i < 17 ; i++) -->
+                            <!-- { -->
+                            <!-- // -->
+                            <!-- var row = csv_info_table.insertRow(-1); -->
+
+                            <!-- // -->
+                            <!-- var cells = rows[i].split(","); -->
+                            <!-- // -->
+                            <!-- for (var j=0 ; j < 4 ; j++) -->
+                            <!-- { -->
+                            <!-- // -->
+                            <!-- var cell = row.insertCell(-1); // Insert cell -->
+
+                            <!-- // -->
+                            <!-- if (cells[j] != null) -->
+                            <!-- { -->
+                            <!-- cell.innerHTML = cells[j]; -->
+                            <!-- } -->
+                            <!-- } -->
+                            <!-- } -->
+
+                            //
+                            var index_data = 0;
+
+                            // Calculate bucket number
+                            var cells = rows[16].split(",");
+                            bucket_num = cells.length - 5;
+                            // Extract bucket times
+                            for (var i = 0; i < cells.length - 5; i++) {
+                                bucket_time[i] = cells[i + 5];
+                            }
+
+                            // Add titles
+                            if (true == new_file) {
+                                // Add titles
+                                var row = table.insertRow(-1);
+                                //
+                                for (i = 0; i < 9; i++) {
+                                    var cell = row.insertCell(-1); // Insert cell
+                                    if (i == 0) {
+                                        cell.innerHTML = "Trace #";
+                                    }
+                                    <!-- else if (i == 1) { -->
+                                    <!-- cell.innerHTML = "Data Point"; -->
+                                    <!-- } -->
+                                    else if (i == 1) {
+                                        cell.innerHTML = "Date";
+                                    } else if (i == 2) {
+                                        cell.innerHTML = "Time (HH:MM:SS)";
+                                    } else if (i == 3) {
+                                        cell.innerHTML = "usec";
+                                    } else if (i == 4) {
+                                        cell.innerHTML = "Longitude";
+                                    } else if (i == 5) {
+                                        cell.innerHTML = "Latitude";
+                                    } else if (i == 6) {
+                                        cell.innerHTML = "Elevation";
+                                    } else if (i == 7) {
+                                        cell.innerHTML = "Strength (dBm)";
+                                    } else if (i == 8) {
+                                        cell.innerHTML = "Strength (dBm) Moving Average";
+                                        moving_avg_col = i;
+                                    }
+                                }
+                            }
+
+                            //
+                            var next_batch = true;
+
+                            // Insert to table and extract data
+                            for (var i = row_counter + 18; i < rows.length && (row_counter % 1500 != 0 || true == next_batch); i++) {
+                                //
+                                next_batch = false;
+
+                                // Save columns (in current row)
+                                var cells = rows[i].split(",");
+
+                                //
+                                if (cells[0].substr(0, 3) == "END") {
+                                    break;
+                                }
+
+                                //
+                                //for (var j=0 ; j < bucket_num ; j++)
+                                //{
+                                // Insert row
+                                var row = table.insertRow(-1);
+
+                                // Insert columns
+                                for (var k = 0; k < 9; k++) {
+                                    var cell = row.insertCell(-1); // Insert cell
+
+                                    // Copy directly
+                                    if (k == 0) {
+                                        cell.innerHTML = cells[k]; // Modify cell
+                                    }
+                                    <!-- else if (k == 1) { -->
+                                    <!-- var data_num = (i-18)*401 + (j) + 1; -->
+                                    <!-- cell.innerHTML = data_num; -->
+                                    <!-- } -->
+                                    else if (k == 1) {
+                                        date_time = cells[1];
+                                        index_space = date_time.indexOf(' ');
+
+                                        date = date_time.substr(0, index_space);
+                                        cell.innerHTML = date; // Modify cell
+                                    } else if (k == 2) {
+                                        var date_time = cells[1];
+                                        var index_space = date_time.indexOf(' ');
+
+                                        time = date_time.substr(index_space + 1);
+                                        cell.innerHTML = time; // Modify cell
+                                    } else if (k == 3) {
+                                        cell.innerHTML = bucket_time[j];
+                                    } else if (k == 4) {
+                                        var longitude = cells[2];
+                                        if (longitude.length > 0) {
+                                            cell.innerHTML = longitude;
+                                        }
+                                    } else if (k == 5) {
+                                        var latitude = cells[3];
+                                        if (latitude.length > 0) {
+                                            cell.innerHTML = latitude;
+                                        }
+                                    } else if (k == 6) {
+                                        var elevation = cells[4];
+                                        if (elevation.length > 0) {
+                                            cell.innerHTML = elevation;
+                                        }
+                                    } else if (k == 7) {
+                                        cell.innerHTML = freq_data_original[index_data];
+                                    } else if (k == 8) {
+                                        cell.innerHTML = freq_data[index_data];
+                                    }
+
+                                }
+
+                                //
+                                index_data = index_data + 1;
+                                //}
+
+                                //
+                                row_counter++;
+                            }
+
+                        }
+
+                        //
+                        new_file = false;
+                    }
+                    reader.readAsText(fileUpload.files[0]);
+                } else {
+                    alert("This browser does not support HTML5.");
+                }
+            } else {
+                alert("Please upload a valid CSV file.");
+            }
+        }
+
+        // Add CSV file name to plot and table
+        function update_analysis() {
+            // Add CSV file name to CSV plot and CSV table
+            document.getElementById("csv_plot_title").innerHTML = "CSV Plot (" + file_name + ")";
+            document.getElementById("csv_table_title").innerHTML = "CSV Table (" + file_name + ")";
+        }
+
+        // Save user inputted loop
+        function input_loop() {
+            // Extract input
+            var input = document.getElementById("input_loop_num").value;
+
+            // Input is not valid - before checking
+            var valid = false;
+
+            // Check if user input is valid
+            if (false == isNaN(input) && input.length != 0) { // Number
+                valid = true;
+            } else if (input == "-") { // Ignore
+                valid = true;
+            } else { // Check if comma-separated numbers
+                //
+                valid = true;
+
+                // Search for invalid loop
+                do {
+                    var loop;
+                    var comma_index;
+
+                    // Extract input loop
+                    comma_index = input.indexOf(",");
+
+                    // Last remaining loop
+                    if (comma_index == -1) {
+                        // Loop is not a number
+                        if (true == isNaN(input) || input.length == 0) {
+                            valid = false;
+                        }
+                        // Multiple remaining loops
+                    } else {
+                        loop = input.substring(0, comma_index); // Extract first value
+                        input = input.substring(+comma_index + 1); // Remove extracted value
+
+                        // Extracted loop is not a number
+                        if (true == isNaN(loop) || loop.length == 0) {
+                            valid = false;
+                        }
+                    }
+
+
+                } while (comma_index != -1);
+            }
+
+            // Ensure input is valid before proceeding
+            if (true == valid) {
+
+                // Store user-inputted loop number
+                loop_num[+loop_num.length] = document.getElementById("input_loop_num").value;
+
+                // Display loops entered
+                document.getElementById("loop_list")
+                    .innerHTML = "Loops: " + loop_num;
+
+                // Highlight next loop to be entered
+                draw_loops();
+
+                // Analyze loops
+                if (loop_num.length == begin_index.length) // Entered last loop
+                {
+                    // Analysis section
+                    document.getElementById("analysis").style.display = "none";
+                    document.getElementById("show_analysis").innerHTML = "Show";
+                    // Report section
+                    document.getElementById("show_report").style.display = "block";
+                    document.getElementById("show_report").innerHTML = "Hide";
+                    document.getElementById("report").style.display = "inline";
+                    //document.getElementById("outer_graph").style.display = "none";
+                    // Analyze loops to determine signal, noise, SNR
+                    analyze_loops();
+
+                    // Modify settings for finding low/high areas
+                    var change = threshold_high_lh - threshold_l_h; // Calculation to get threshold_l_h = 5, when passed to update_lh_h
+                    update_lh_h(change);
+                    var change = threshold_low_lh - threshold_l_l;
+                    update_lh_l(change);
+
+                    // Modify settings for finding loops
+                    var change = consecutive_lh - consecutive;
+                    change_consecutive(change);
+
+                    // Proceed to examine signal drops now that finished examining loops
+                    find_lh("normal"); //CC
+                }
+            }
+
+            // Reset input text
+            document.getElementById("input_loop_num").value = "";
+            document.getElementById("input_loop_num").focus();
+            document.getElementById("input_loop_num").select();
+        }
+
+        // Removes the last loop that has been inputted
+        function remove_loop() {
+            // Remove the last loop from the array
+            var loop_num_temp = [];
+            for (var i = 0; i < +loop_num.length - 1; i++) {
+                loop_num_temp[i] = loop_num[i];
+            }
+            loop_num = loop_num_temp;
+            loop_num_temp = "";
+
+            // Display loops entered
+            document.getElementById("loop_list")
+                .innerHTML = "Loops: " + loop_num;
+
+            // Highlight next loop to be entered
+            draw_loops();
+        }
+
+        // Calculate average signal and noise for each loop
+        function analyze_loops() {
+            // Declare variables
+            var loop_no; // Loop number entered by user
+            var loop_status;
+            var sum = 0;
+            var points = 0;
+            var avg_p;
+            var loop_count = 0; // Real loop count based on user input
+            var comma_index; // Index of comma if user enters multiple loops in single index
+            var total_loops = 0; // Total loops of a single index
+
+            // Store raw loop data (unmodified inputted loops, begin index, end index)
+            for (var i = 0; i < loop_num.length; i++) {
+                loop_num_raw[i] = [begin_index[i], end_index[i], loop_num[i]];
+            }
+
+            // Re-configure loop_num[], begin_index[], end_index[] based on entered loops
+            var loop_num_temp = [];
+            var begin_index_temp = [];
+            var end_index_temp = [];
+            for (var i = 0; i < loop_num.length; i++) {
+                // Set initial value
+                total_loops = 0;
+
+                // Remove loop
+                if (loop_num[i] == "-" || loop_num[i].length == 0) {
+                    //alert("removed");
+                } else {
+                    // Extract all loops from index
+                    do {
+                        // Find first remaining comma in user-inputted loop
+                        comma_index = loop_num[i].indexOf(",");
+
+                        // Comma not found - a single loop has been entered
+                        if (comma_index == -1) {
+                            //
+                            loop_num_temp[loop_count] = loop_num[i];
+
+                            //
+                            loop_count += 1;
+                            total_loops += 1;
+                        } else {
+                            //
+                            loop_num_temp[loop_count] = loop_num[i].substring(0, comma_index); // Extract first value
+                            loop_num[i] = loop_num[i].substring(+comma_index + 1); // Remove extracted value
+
+                            //
+                            loop_count += 1;
+                            total_loops += 1;
+                        }
+                    } while (comma_index != -1);
+
+                    // Only one loop was entered for particular loop
+                    if (total_loops == 1) {
+                        begin_index_temp[+loop_count - total_loops] = begin_index[i];
+                        end_index_temp[+loop_count - total_loops] = end_index[i];
+                    }
+                    // More than only loop entered by user - separated by commas
+                    else if (total_loops >= +1) {
+                        //
+                        for (var j = 0; j < total_loops; j++) {
+                            begin_index_temp[(+loop_count - total_loops) + +j] = begin_index[i] + +j * Math.floor((+end_index[i] - begin_index[i]) / total_loops);
+                            end_index_temp[(+loop_count - total_loops) + +j] = begin_index[i] + +(+j + 1) * Math.floor((+end_index[i] - begin_index[i]) / total_loops) - 1;
+                        }
+                    }
+
+                }
+            }
+            // Replace old values (entered by user) with new values
+            loop_num = loop_num_temp;
+            begin_index = begin_index_temp;
+            end_index = end_index_temp;
+            // Free variables
+            loop_num_temp = [];
+            begin_index_temp = [];
+            end_index_temp = [];
+
+
+            // Calculate values for each (including repeating) loop
+            // Run through each loop
+            var prev_file_loops = avg_power.length;
+            for (var i = 0; i < loop_num.length; i++) {
+                // Set initial values
+                sum = 0; // sum
+
+                // Loop #
+                loop_no = loop_num[i];
+
+                // ON/OFF
+                // OFF
+                if (false == state[begin_index[i]]) {
+                    loop_status = 0;
+                }
+                // ON
+                else if (true == state[begin_index[i]]) {
+                    loop_status = 1;
+                }
+
+                // sum - run through each point in the loop
+                for (j = begin_index[i]; j <= end_index[i]; j++) {
+                    // Add to sum
+                    sum += +freq_data[j];
+                }
+
+                // points
+                points = +end_index[i] - (+begin_index[i] - 1);
+
+                // Average power
+                avg_p = +sum / points;
+
+                // Create array element
+                avg_power[+prev_file_loops + i] = [loop_no, loop_status, sum, points, avg_p];
+            }
+
+            //
+            combine_loops();
+        }
+
+        // Combine user-inputted loops which have the same loop number
+        function combine_loops() {
+            // Declare variables
+            var loop_no;
+            var loop_status;
+            var sum = 0;
+            var points = 0;
+            var avg_p;
+            var index = -1;
+            var match_index; // Index in NEW array match occurs
+
+            // Store avg_power in temp variable
+            var avg_power_temp = avg_power;
+
+            // Reset variables
+            avg_power = [];
+
+            // Run through each loop
+            for (var i = 0; i < avg_power_temp.length; i++) {
+                // Get loop number and loop status
+                loop_no = avg_power_temp[i][0];
+                loop_status = avg_power_temp[i][1];
+
+                // Add new element
+                match_index = check_loop(avg_power, loop_no, loop_status);
+                if (-1 == match_index) {
+                    // Increment index
+                    index += +1;
+
+                    // Copy element
+                    avg_power[index] = avg_power_temp[i];
+                }
+                // Append data (to existing element in NEW array)
+                else {
+                    // Add sums
+                    avg_power[match_index][2] += +avg_power_temp[i][2];
+                    // Add points
+                    avg_power[match_index][3] += +avg_power_temp[i][3];
+                    // Re-calculate avg_power
+                    avg_power[match_index][4] = +avg_power[match_index][2] / +avg_power[match_index][3];
+                }
+            }
+
+            // Find the max and in signal strength of modified and original data
+            loop_max_min();
+            // Draw loops on interactive graph in analysis section
+
+            // Sort array by increasing loop number
+            avg_power.sort(sortFunction);
+
+            function sortFunction(a, b) {
+                if (a[0] === b[0]) {
+                    return 0;
+                } else {
+                    return (+a[0] < +b[0]) ? -1 : 1;
+                }
+            }
+
+            // Last file
+            if (file_to_analyze > num_files) { // Reminder: file_to_analyze is the NEXT file that needs to be analyzed
+                loops_report(); // Update the SNR loop data in the report
+                document.getElementById("past_graphs").style.display = "block"; // Display options to view previous CSV file graphs
+            }
+
+        }
+
+        // Create the table in the report indicating Signal, Noise, and SNR for each loop
+        function loops_report() {
+            //
+            //d3.selectAll("#table_loops_report > *").remove();
+
+            //
+            var table = document.getElementById("table_loops_report");
+            var cell1;
+            var cell2;
+            var cell3;
+            var cell4;
+
+            // Title
+            row = table.insertRow(-1);
+            // Loop column
+            cell = row.insertCell(-1);
+            cell.innerHTML = "Loop";
+            // Signal column
+            cell = row.insertCell(-1);
+            cell.innerHTML = "Signal (dBm)";
+            // Noise column
+            cell = row.insertCell(-1);
+            cell.innerHTML = "Noise (dBm)";
+            // SNR column
+            cell = row.insertCell(-1);
+            cell.innerHTML = "SNR (dB)";
+
+            // Sort avg_power by increasing loop number
+            avg_power.sort(sortFunction);
+
+            function sortFunction(a, b) {
+                if (a[0] === b[0]) {
+                    return 0;
+                } else {
+                    return (+a[0] < +b[0]) ? -1 : 1;
+                }
+            }
+
+
+            // Loop for each loop in avg_power
+            for (var i = 0; i < avg_power.length; i++) {
+                // Previous - different loop # - New row
+                if (i == 0 || avg_power[+i - 1][0] != avg_power[i][0]) {
+                    // New row
+                    row = table.insertRow(-1);
+
+                    // Add cells
+                    cell1 = row.insertCell(-1);
+                    cell2 = row.insertCell(-1);
+                    cell3 = row.insertCell(-1);
+                    cell4 = row.insertCell(-1);
+
+                    // Loop number
+                    cell1.innerHTML = avg_power[i][0];
+
+                    // Next is a repeat loop #
+                    if (i != +avg_power.length - 1 && avg_power[i][0] == avg_power[+i + 1][0]) {
+                        // Current is ON (=signal)
+                        if (avg_power[i][1] == 1) {
+                            // Insert Signal/Noise
+                            cell2.innerHTML = Math.round(+avg_power[i][4] * 10) / 10;
+                            cell3.innerHTML = Math.round(+avg_power[+i + 1][4] * 10) / 10;
+                            // SNR
+                            cell4.innerHTML = Math.round((+avg_power[i][4] - +avg_power[+i + 1][4]) * 10) / +10; // Signal - Noise
+                        }
+                        // Current is OFF (=noise), next is ON
+                        else if (avg_power[i][1] == 0) {
+                            // Insert Signal/Noise
+                            cell2.innerHTML = Math.round(+avg_power[+i + 1][4] * 10) / 10;
+                            cell3.innerHTML = Math.round(+avg_power[i][4] * 10) / 10;
+                            // SNR
+                            cell4.innerHTML = Math.round((+avg_power[+i + 1][4] - +avg_power[i][4]) * 10) / +10; // Signal - Noise
+                        }
+                    }
+                    // Next is not a repeat loop #
+                    else {
+                        // Current is ON (=signal)
+                        if (avg_power[i][1] == 1) {
+                            // Insert Signal/Noise
+                            cell2.innerHTML = Math.round(+avg_power[i][4] * 10) / +10;
+                            cell3.innerHTML = "-";
+                            // SNR
+                            cell4.innerHTML = "-"; // Signal - Noise
+                        }
+                        // Current is OFF (=noise), next is ON
+                        else if (avg_power[i][1] == 0) {
+                            // Insert Signal/Noise
+                            cell2.innerHTML = "-";
+                            cell3.innerHTML = Math.round(+avg_power[i][4] * 10) / 10;
+                            // SNR
+                            cell4.innerHTML = "-"; // Signal - Noise
+                        }
+                    }
+                }
+
+            }
+        }
+
+        // Find areas of low signal strength
+        function find_lh(task) // Task is 'prev' for viewing past CSV file, 'normal' for regular upload
+        {
+            // Assign each data point a value of either true or false. True is normal strength, false is low/high strength
+            lh_state();
+
+            //
+            //d3.selectAll("#table_lh > *").remove();
+
+            //
+            //var table = document.getElementById("table_lh");
+
+            // Declare variables
+            var row;
+            var cell = [];
+            var num_beginning = 0;
+            var num_end = 0;
+            var ended = false;
+
+            // Reset variables
+            begin_index = [];
+            end_index = [];
+            max_signal = []; // For single high/low
+            min_signal = []; // For single high/low
+
+            // Title
+            <!-- row = table.insertRow(-1); -->
+            <!-- // -->
+            <!-- cell = row.insertCell(-1); -->
+            <!-- cell.innerHTML = "Beginning"; -->
+            <!-- // -->
+            <!-- cell = row.insertCell(-1); -->
+            <!-- cell.innerHTML = "End"; -->
+
+            // Run through state data (detecting change in state)
+            for (var i = 0; i < state.length; i++) {
+                // Beginning of low/high
+                if ((i == 0 && false == state[i]) || (true == state[i - 1] && false == state[i])) // Prev: normal, Curr: high/low
+                {
+                    //
+                    <!-- row = table.insertRow(-1); -->
+
+                    //
+                    <!-- cell = row.insertCell(-1); -->
+                    <!-- cell.innerHTML = i; -->
+
+                    //
+                    begin_index[num_beginning] = i;
+
+                    //
+                    num_beginning += +1;
+
+                    //
+                    max_signal[num_beginning - 1] = freq_data[i];
+                    min_signal[num_beginning - 1] = freq_data[i];
+                }
+                // End of low/high
+                if ((i == state.length - 1 && false == state[i] && num_beginning > num_end) || (true == state[i + 1] && false == state[i])) // Next: normal, Curr: high/low
+                {
+                    //
+                    <!-- cell = row.insertCell(-1); -->
+                    <!-- cell.innerHTML = i; -->
+
+                    // Store end index of ending point of event
+                    end_index[num_end] = i;
+
+                    // Increment the number of event endings
+                    num_end += +1;
+
+                    // Enable event ended
+                    ended = true;
+                }
+
+                // In middle of high/low
+                if (num_beginning > num_end || true == ended) {
+                    // Current point is greater than max
+                    if (+freq_data[i] > +max_signal[num_beginning - 1]) {
+                        max_signal[num_beginning - 1] = freq_data[i];
+                    }
+                    // Current point is less than min
+                    if (+freq_data[i] < +min_signal[num_beginning - 1]) {
+                        min_signal[num_beginning - 1] = freq_data[i];
+                    }
+
+                    // Disable event ended
+                    ended = false;
+                }
+
+            }
+
+            // Remove previous indicators
+            d3.selectAll("rect.rect").remove();
+            d3.selectAll("rect.rect_outline").remove();
+
+            // Draw a rect for each event
+            for (var i = 0; i < begin_index.length; i++) {
+                // Fill
+                focus.append("rect")
+                    .attr("class", "rect")
+                    .attr("width", function(d, j) {
+                        return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                    })
+                    .attr("height", function() {
+                        return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                    })
+                    .attr('x', function(d, j) {
+                        return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                    })
+                    .attr("y", function(d, j) {
+                        return +y(max_signal[i]) - rect_margin;
+                    })
+                    .attr("clip-path", "url(#clip)")
+                    .style("stroke-width", 0)
+                    .style("stroke", "black")
+                    .style("fill", "black")
+                    .style("opacity", "0.1");
+
+                // Outline
+                focus.append("rect")
+                    .attr("class", "rect_outline")
+                    .attr("width", function(d, j) {
+                        return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                    })
+                    .attr("height", function() {
+                        return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                    })
+                    .attr('x', function(d, j) {
+                        return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                    })
+                    .attr("y", function(d, j) {
+                        return +y(max_signal[i]) - rect_margin;
+                    })
+                    .attr("clip-path", "url(#clip)")
+                    .style("stroke-width", 1)
+                    .style("stroke", "black")
+                    .style("fill", "none")
+                    .style("opacity", "1");
+            }
+
+            // Regular file upload
+            if (task.substring(0, 4) != "prev") {
+                lh_report(); // Add data to report
+            }
+        }
+
+        // Add low/high signal events to report in the form of graphs
+        function lh_report() {
+            // Create divs - one div for each loop
+            observation_divs();
+
+            // Draw each loop's ON and OFF in report
+            loop_overview();
+
+            // Draw each low/high area in report
+            for (var i = 0; i < begin_index.length; i++) {
+                // Store loop number in variable.
+                var loop_no = print_lh_loop(i, "store");
+
+                // Print data about event
+                print_file_name(loop_no);
+                print_lh_loop(i, "print"); // Print loop number
+                print_lh_coords(i, loop_no);
+                print_avg_drop(i, loop_no);
+
+                // Calculate domain and extension
+                var dom = +end_index[i] - (+begin_index[i] - 1); // Current domain
+                var ext = +100 + (+3) * (+dom); // Extra data displayed on either side - +100 is for if low area is small
+
+                // Calculate begin index (to be graphed)
+                var begin_index_r = +x_dist[begin_index[i]].dist - ext;
+                if (begin_index_r < 0) {
+                    begin_index_r = 0;
+                }
+                // Calculate end index (to be graphed)
+                var end_index_r = +x_dist[begin_index[i]].dist + ext;
+                if (end_index_r > +freq_data_original.length - 1) {
+                    end_index_r = +freq_data_original.length - 1;
+                }
+                // Update domain
+                dom = +end_index_r - begin_index_r + 1;
+
+                // Create graph of event
+                svg2 = d3.select("#obs_div_events" + loop_no)
+                    .append("svg")
+                    .attr("width", 900)
+                    .attr("height", 450);
+
+                // Width and height of graph
+                var width = +svg2.attr("width") - margin.left - margin.right;
+                var height = +svg2.attr("height") - margin.top - margin.bottom;
+
+                // Calculate range and excess y-scale. Range is the width/height of the actual graph
+                var x = d3.scaleLinear().range([0, width]);
+                var x2 = d3.scaleLinear().range([0, width]);
+                var y = d3.scaleLinear().range([height, 0]);
+                var y2 = d3.scaleLinear().range([height2, 0]);
+                var graph_extra = Math.abs((+freq_max - +freq_min) / 2);
+
+                // Create variables for the axis
+                var xAxis = d3.axisBottom(x);
+                var xAxis2 = d3.axisBottom(x2);
+                var yAxis = d3.axisLeft(y);
+
+                //
+                var line = d3.line()
+                    .x(function(d, i) {
+                        return x(d.dist);
+                    })
+                    .y(function(d) {
+                        return y(d.freq);
+                    })
+
+                //
+                var line2 = d3.line()
+                    .x(function(d, i) {
+                        return x2(i);
+                    })
+                    .y(function(d) {
+                        return y2(d);
+                    })
+
+                // Clip graph lines that go beyond the axis
+                var clip = svg2.append("defs").append("svg:clipPath")
+                    .attr("id", "clip2")
+                    .append("svg:rect")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("x", 0)
+                    .attr("y", 0);
+
+                //
+                var Line_chart = svg2.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                    .attr("clip-path", "url(#clip2)");
+
+                //
+                var focus = svg2.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                //
+                var context = svg2.append("g")
+                    .attr("class", "context")
+                    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+                // Find the x and y domains - these are the numbers displayed on the scale
+                x.domain([begin_index_r, end_index_r]);
+                //x.domain([0, freq_data.length - 1]);
+                //y.domain([Math.min.apply(Math, freq_data) - graph_extra, Math.max.apply(Math, freq_data) + graph_extra]);
+                y.domain([+freq_min - graph_extra, +freq_max + graph_extra]);
+                x2.domain(x.domain());
+                y2.domain(y.domain());
+
+                // add the X gridlines
+                var x_grid_drawing = focus.append("g")
+                    .attr("class", "grid grid--x")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(make_x_gridlines(x)
+                        .tickSize(-height)
+                        .tickFormat("")
+                    );
+
+                // add the Y gridlines
+                var y_grid_drawing = focus.append("g")
+                    .attr("class", "grid grid--y")
+                    .call(make_y_gridlines(y)
+                        .tickSize(-width)
+                        .tickFormat("")
+                    );
+
+                // add the X axis
+                var x_axis_drawing = focus.append("g")
+                    .attr("class", "axis axis--x")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+                // add the Y axis
+                var y_axis_drawing = focus.append("g")
+                    .attr("class", "axis axis--y")
+                    .call(yAxis);
+
+                // Add the graph line (modified signal strength)
+                var graph_line_r = Line_chart.append("path")
+                    .datum(x_dist)
+                    .attr("class", "line_m")
+                    .attr("d", line);
+
+                // Fill rect around signal drop
+                focus.append("rect")
+                    .attr("class", "rect_r")
+                    .attr("width", function(d, j) {
+                        return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                    })
+                    .attr("height", function() {
+                        return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                    })
+                    .attr('x', function(d, j) {
+                        return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                    })
+                    .attr("y", function(d, j) {
+                        return +y(max_signal[i]) - rect_margin;
+                    })
+                    .attr("clip-path", "url(#clip2)")
+                    .style("stroke-width", 0)
+                    .style("stroke", "black")
+                    .style("fill", "black")
+                    .style("opacity", "0.1");
+
+                // Outline rect around signal drop
+                focus.append("rect")
+                    .attr("class", "rect_outline_r")
+                    .attr("width", function(d, j) {
+                        return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                    })
+                    .attr("height", function() {
+                        return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                    })
+                    .attr('x', function(d, j) {
+                        return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                    })
+                    .attr("y", function(d, j) {
+                        return +y(max_signal[i]) - rect_margin;
+                    })
+                    .attr("clip-path", "url(#clip2)")
+                    .style("stroke-width", 1)
+                    .style("stroke", "black")
+                    .style("fill", "none")
+                    .style("opacity", "1");
+            }
+
+            // Upload the next file
+            if (file_to_analyze <= num_files) // Reminder: file_to_analyze is the NEXT file that needs to be analyzed
+            {
+                partial_reset(); // Partial reset to upload next file
+                Upload("none"); // Upload next file
+            }
+            // Current file is last file
+            else {
+                // Disable analyze buttons - must 'clear all' to analyze again
+                disable_analyze();
+            }
+        }
+
+        // Update data displayed on graph in analysis and settings
+        function update_data(task) {
+            // Upload new file OR find signal drops - in both cases will replace interactive graph
+            if (task == "upload" || task == "find_lh") {
+                // Remove previous graph
+                d3.selectAll("#graph > *").remove();
+
+                // Update the moving averages
+                if (true == uploaded_first_graph) {
+                    moving_avg(0, "m"); // 0 change - just apply updated number
+                    moving_avg(0, "l");
+                }
+
+                // Create array of x-values correspondng to each point's index
+                x_val = []; // X data
+                for (i = 0; i < freq_data.length; i++) {
+                    x_val[i] = i;
+                }
+
+                //
+                svg = d3.select("#graph")
+                    .on("wheel", wheeled); // Fixes issue with zoom not working in Chrome
+                margin = {
+                        top: 20,
+                        right: 20,
+                        bottom: 110,
+                        left: 40
+                    },
+                    margin2 = {
+                        top: 430,
+                        right: 20,
+                        bottom: 30,
+                        left: 40
+                    },
+                    width = +svg.attr("width") - margin.left - margin.right,
+                    height = +svg.attr("height") - margin.top - margin.bottom,
+                    height2 = +svg.attr("height") - margin2.top - margin2.bottom;
+
+                // For testing
+                function wheeled() {
+                }
+
+                // Calculate range and excess y-scale. Range is the width/height of the actual graph
+                x = d3.scaleLinear().range([0, width]),
+                    x2 = d3.scaleLinear().range([0, width]),
+                    y = d3.scaleLinear().range([height, 0]),
+                    y2 = d3.scaleLinear().range([height2, 0]);
+                graph_extra = Math.abs((+freq_max - +freq_min) / 2)
+
+                // Create variables for the axis
+                xAxis = d3.axisBottom(x),
+                    xAxis2 = d3.axisBottom(x2),
+                    yAxis = d3.axisLeft(y);
+
+                brush = d3.brushX()
+                    .extent([
+                        [0, 0],
+                        [width, height2]
+                    ])
+                    .on("brush end", brushed);
+
+                // Enable zooming on graph
+                zoom = d3.zoom()
+                    .scaleExtent([1, Infinity])
+                    .translateExtent([
+                        [0, 0],
+                        [width, height]
+                    ])
+                    .extent([
+                        [0, 0],
+                        [width, height]
+                    ])
+                    .on("zoom", zoomed);
+
+                //
+                line = d3.line()
+                    .x(function(d, i) {
+                        return x(d.dist);
+                    })
+                    .y(function(d) {
+                        return y(d.freq);
+                    })
+
+                //
+                line2 = d3.line()
+                    .x(function(d, i) {
+                        return x2(d.dist);
+                    })
+                    .y(function(d) {
+                        return y2(d.freq);
+                    })
+
+                // Clip graph lines that go beyond axis
+                clip = svg.append("defs").append("svg:clipPath")
+                    .attr("id", "clip")
+                    .append("svg:rect")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("x", 0)
+                    .attr("y", 0);
+
+                //
+                Line_chart = svg.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                    .attr("clip-path", "url(#clip)");
+
+                //
+                focus = svg.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                //
+                context = svg.append("g")
+                    .attr("class", "context")
+                    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+                // Original data used for domain because it has largest domain in case want to display original
+                graph_extra = Math.abs((+freq_original_max - freq_original_min) / 2);
+                x.domain([0, freq_data.length - 1]);
+                y.domain([+freq_original_min - graph_extra, +freq_original_max + graph_extra]);
+                x2.domain(x.domain());
+                y2.domain(y.domain());
+
+                // add the X gridlines
+                x_grid_drawing = focus.append("g")
+                    .attr("class", "grid grid--x")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(make_x_gridlines(x)
+                        .tickSize(-height)
+                        .tickFormat("")
+                    );
+
+                // add the Y gridlines
+                y_grid_drawing = focus.append("g")
+                    .attr("class", "grid grid--y")
+                    .call(make_y_gridlines(y)
+                        .tickSize(-width)
+                        .tickFormat("")
+                    );
+
+                // Add x-axis to graph
+                x_axis_drawing = focus.append("g")
+                    .attr("class", "axis axis--x")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(xAxis);
+
+                // Add y-axis to graph
+                y_axis_drawing = focus.append("g")
+                    .attr("class", "axis axis--y")
+                    .call(yAxis);
+
+                // Graph signal strength data
+                draw_data();
+
+                // Add x-axis to miniature graph
+                x_axis2_drawing = context.append("g")
+                    .attr("class", "axis axis--x")
+                    .attr("transform", "translate(0," + height2 + ")")
+                    .call(xAxis2);
+
+                // Enable brushing on graph
+                context.append("g")
+                    .attr("class", "brush")
+                    .call(brush)
+                    .call(brush.move, x.range());
+
+                // Cursor - freq_data_original
+                focus_pnt_o = svg
+                    .append('g')
+                    .append('circle')
+                    .style("fill", "darkred")
+                    .attr("stroke", "none")
+                    .attr('r', 3)
+                    .style("opacity", 0)
+                focusText_o = svg
+                    .append('g')
+                    .append('text')
+                    .style('fill', 'darkred')
+                    .style("opacity", 0)
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline", "middle");
+
+                // Cursor - freq_data
+                focus_pnt = svg
+                    .append('g')
+                    .append('circle')
+                    .style("fill", "blue")
+                    .attr("stroke", "none")
+                    .attr('r', 3)
+                    .style("opacity", 0)
+                focusText = svg
+                    .append('g')
+                    .append('text')
+                    .style('fill', 'blue')
+                    .style("opacity", 0)
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline", "middle");
+
+                // Cursor - freq_data_s
+                focus_pnt_s = svg
+                    .append('g')
+                    .append('circle')
+                    .style("fill", "brown")
+                    .attr("stroke", "none")
+                    .attr('r', 3)
+                    .style("opacity", 0)
+                focusText_s = svg
+                    .append('g')
+                    .append('text')
+                    .style('fill', 'brown')
+                    .style("opacity", 0)
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline", "middle");
+
+                // Cursor - freq_data_l
+                focus_pnt_l = svg
+                    .append('g')
+                    .append('circle')
+                    .style("fill", "limegreen")
+                    .attr("stroke", "none")
+                    .attr('r', 3)
+                    .style("opacity", 0)
+                focusText_l = svg
+                    .append('g')
+                    .append('text')
+                    .style('fill', 'limegreen')
+                    .style("opacity", 0)
+                    .attr("text-anchor", "left")
+                    .attr("alignment-baseline", "middle");
+
+                // Add rect where zooming is allowed
+                svg.append("rect")
+                    .style("pointer-events", "all")
+                    .attr("class", "zoom")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                    .on('mouseover', mouseover)
+                    .on('mousemove', mousemove)
+                    .on('mouseout', mouseout)
+                    .call(zoom);
+
+                // Indicate that the file has been graphed at least once
+                uploaded_first_graph = true;
+
+            }
+            // Any other task
+            else {
+                // Re-graph signal data to apply changes
+                draw_data();
+            }
+
+            // Updates upper and lower absolute thresholds displayed on graph
+            update_threshold();
+
+            // Update data displayed in settings
+            document.getElementById("moving_avg_display_m")
+                .innerHTML = "Moving average (modified): " + moving_num;
+
+            //
+            document.getElementById("moving_avg_display_s")
+                .innerHTML = "Moving average (crossover): " + moving_num_s;
+
+            //
+            document.getElementById("moving_avg_display_l")
+                .innerHTML = "Moving average (low/high): " + moving_num_l;
+
+            //
+            document.getElementById("crossover_l")
+                .innerHTML = "Threshold min (crossover): " + threshold_l_c;
+
+            //
+            document.getElementById("lh_h")
+                .innerHTML = "Threshold max (low/high): " + threshold_l_h;
+
+            //
+            document.getElementById("lh_l")
+                .innerHTML = "Threshold min (low/high): " + threshold_l_l;
+
+            //
+            document.getElementById("consecutive_display")
+                .innerHTML = "Persistency: " + consecutive;
+        }
+
+        // gridlines in x axis function
+        function make_x_gridlines(x) {
+            return d3.axisBottom().scale(x);
+            //.ticks(8);
+        }
+        // gridlines in y axis function
+        function make_y_gridlines(y) {
+            return d3.axisLeft().scale(y)
+                .ticks(8);
+        }
+
+        // Update interactive graph in analysis section when user does a brush
+        function brushed() {
+            if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+            var s = d3.event.selection || x2.range();
+            // Update x domain
+            x.domain(s.map(x2.invert, x2));
+            // Update moving average lines and threshold lines
+            Line_chart.select(".line_o").attr("d", line);
+            Line_chart.select(".line_m").attr("d", line);
+            Line_chart.select(".line_s").attr("d", line);
+            Line_chart.select(".line_l").attr("d", line);
+            Line_chart.select(".line_s_l").attr("d", line);
+            Line_chart.select(".line_l_h").attr("d", line);
+            Line_chart.select(".line_l_l").attr("d", line);
+            // Update x-axis
+            focus.select(".axis--x").call(xAxis);
+            focus.select(".grid--x")
+                .call(make_x_gridlines(x)
+                    .tickSize(-height)
+                    .tickFormat("")
+                );
+            // Update rectangles around events on graph
+            focus.selectAll(".rect")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                })
+            focus.selectAll(".rect_outline")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                })
+
+            // Update range rectangles on graph
+            focus.selectAll(".range")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[range_end[i]].dist) - x(x_dist[range_start[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[range_start[i]].dist) - rect_margin;
+                })
+            focus.selectAll(".range_outline")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[range_outline_end[i]].dist) - x(x_dist[range_outline_start[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[range_outline_start[i]].dist) - rect_margin;
+                })
+
+            svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
+                .scale(width / (s[1] - s[0]))
+                .translate(-s[0], 0));
+
+            // Update crossover lines on graph
+            focus.selectAll(".crossover")
+                .attr('x1', function(d, i) {
+                    return x(crossover_list[i][0])
+                })
+                .attr('x2', function(d, i) {
+                    return x(crossover_list[i][0])
+                });
+
+            // Second or above uploaded graph - First is sample graph that is not displayed
+            if (true == uploaded_first_graph) {
+                mouseout(); // Disable cursors while brushing
+            }
+        }
+
+        // Update interactive graph in analysis section when user does a zoom
+        function zoomed() {
+            if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+            var t = d3.event.transform;
+            // Update x domain
+            x.domain(t.rescaleX(x2).domain());
+            // Update moving average lines and threshold lines
+            Line_chart.select(".line_o").attr("d", line);
+            Line_chart.select(".line_s").attr("d", line);
+            Line_chart.select(".line_m").attr("d", line);
+            Line_chart.select(".line_l").attr("d", line);
+            Line_chart.select(".line_s_l").attr("d", line);
+            Line_chart.select(".line_l_h").attr("d", line);
+            Line_chart.select(".line_l_l").attr("d", line);
+            // Update x-axis
+            focus.select(".axis--x").call(xAxis);
+            focus.select(".grid--x")
+                .call(make_x_gridlines(x)
+                    .tickSize(-height)
+                    .tickFormat("")
+                );
+            // Update rectangles around events on graph
+            focus.selectAll(".rect")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                })
+            focus.selectAll(".rect_outline")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                })
+
+            // Update range rectangles on graph
+            focus.selectAll(".range")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[range_end[i]].dist) - x(x_dist[range_start[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[range_start[i]].dist) - rect_margin;
+                })
+            focus.selectAll(".range_outline")
+                .attr("width", function(d, i) {
+                    return +x(x_dist[range_outline_end[i]].dist) - x(x_dist[range_outline_start[i]].dist) + (+2 * rect_margin);
+                })
+                .attr('x', function(d, i) {
+                    return +x(x_dist[range_outline_start[i]].dist) - rect_margin;
+                })
+
+            context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+
+            // Update crossover lines on graph
+            focus.selectAll(".crossover")
+                .attr('x1', function(d, i) {
+                    return x(crossover_list[i][0])
+                })
+                .attr('x2', function(d, i) {
+                    return x(crossover_list[i][0])
+                });
+
+            // Second or above uploaded graph - First is sample graph that is not displayed
+            if (true == uploaded_first_graph) {
+                mouseout(); // Disable cursors while zooming
+            }
+        }
+
+        // Print the loop number of selected event in the report. Finds both beginning loop and ending loop.
+        function print_lh_loop(i, task) // i is the lh index. Task is store or print
+        {
+            // Declare variables
+            var begin_loop;
+            var end_loop;
+            var return_loop; // Loop to be returned for identifying div
+
+            // Check every loop for inputted lh's beginning
+            for (var j = 0; j < loop_num_raw.length; j++) {
+                // Beginning loop
+                if (begin_index[i] >= loop_num_raw[j][0] && begin_index[i] <= loop_num_raw[j][1]) // lh begins between loop[j]'s beginning and end
+                {
+                    begin_loop = loop_num_raw[j][2];
+                    break;
+                }
+            }
+            // Check every loop for inputted lh's end
+            for (var j = 0; j < loop_num_raw.length; j++) {
+                // End loop
+                if (end_index[i] >= loop_num_raw[j][0] && end_index[i] <= loop_num_raw[j][1]) // lh ends between loop[j]'s beginning and end
+                {
+                    end_loop = loop_num_raw[j][2];
+                    break;
+                }
+            }
+
+            // Find beginning loop of FIRST loop (ex: 5,6 beginning loop returns 5)
+            var comma_index = begin_loop.indexOf(",");
+            if (comma_index == -1) {
+                return_loop = begin_loop;
+            } else {
+                return_loop = begin_loop.substring(0, comma_index);
+            }
+
+            // Print loop number to report
+            if (task == "print") {
+                // Begin and end loops are the same
+                if (end_loop == begin_loop) {
+                    d3.select("#obs_div_events" + return_loop)
+                        .append("p")
+                        .text("Loop: " + begin_loop);
+                } else { // Begin and end loops are different
+                    d3.select("#obs_div_events" + return_loop)
+                        .append("p")
+                        .text("Loop: " + begin_loop + " to " + end_loop);
+                }
+            }
+
+            // Return beginning loop of FIRST loop (ex: 5,6 beginning loop returns 5)
+            return return_loop;
+
+        }
+
+        // Prints cooridnates of beginning and end of low/high signal areas to report
+        function print_lh_coords(i, loop_no) // i is the lh index
+        {
+            // Declare variables
+            var lon_begin;
+            var lat_begin;
+            var lon_end;
+            var lat_end;
+
+            // Retrieve longitude/latitude of beginning of low/high signal area
+            lon_begin = longitude[begin_index[i]];
+            lat_begin = latitude[begin_index[i]];
+            // Retrieve longitude/latitude of end of low/high signal area
+            lon_end = longitude[end_index[i]];
+            lat_end = latitude[end_index[i]];
+
+            // Print longitude/latitude of beginning of low/high signal area
+            d3.select("#obs_div_events" + loop_no)
+                .append("p")
+                .text("Beginning: " + lat_begin + ", " + lon_begin + "  ")
+                .append("a")
+                .attr("target", "_blank")
+                .attr("href", "https://www.google.com/maps/search/" + lat_begin + "," + lon_begin + "/")
+                .html("View on Map");
+
+            // Print longitude/latitude of end of low/high signal area
+            d3.select("#obs_div_events" + loop_no)
+                .append("p")
+                .text("End: " + lat_end + ", " + lon_end + "  ")
+                .append("a")
+                .attr("target", "_blank")
+                .attr("href", "https://www.google.com/maps/search/" + lat_end + "," + lon_end + "/")
+                .html("View on Map");
+        }
+
+        // Prints average drop of low signal areas to report. Function prints average drop for one event.
+        function print_avg_drop(i, loop_no) // i is the lh index
+        {
+            // Declare variables
+            var sum = 0; // For finding average drop. Note: sum of SIGNAL DROP
+            var points = 0; // For finding average drop
+            var avg_drop;
+
+            // Loop for every point in low/high signal area
+            for (var j = begin_index[i]; j < end_index[i]; j++) {
+                sum += +freq_data_l[j] - freq_data[j];
+            }
+
+            // Calculate average drop for inputted low/high area
+            points = +end_index[i] - (+begin_index[i] - 1);
+            avg_drop = +sum / points;
+
+            // Signal drop/rise
+            if (+avg_drop >= 0) {
+                d3.select("#obs_div_events" + loop_no)
+                    .append("p")
+                    .text("Average drop in signal strength: " + avg_drop + " dBm");
+            } else {
+                var avg_rise = -1 * +avg_drop;
+                d3.select("#obs_div_events" + loop_no)
+                    .append("p")
+                    .text("Average rise in signal strength: " + avg_rise + " dBm");
+            }
+        }
+
+        // Print the CSV file name to appropriate div in report
+        function print_file_name(loop_no) {
+            d3.select("#obs_div_events" + loop_no)
+                .append("p")
+                .text(file_name);
+        }
+
+        // Create divs in report - one div for each loop
+        function observation_divs() {
+            // Loop for each loop
+            for (var i = 0; i < avg_power.length; i++) {
+                // Div does not already exist
+                if (document.getElementById("obs_div" + avg_power[i][0]) == null) {
+                    // Div for entire loop
+                    var loop_div = "obs_div" + avg_power[i][0];
+                    d3.select("#report")
+                        .append("div")
+                        .attr("id", loop_div);
+                    <!-- .append("p") -->
+                    <!-- .text(loop_div); -->
+
+                    // Div for entire OFF loop
+                    var loop_div_off = "obs_div_off" + avg_power[i][0];
+                    d3.select("#" + loop_div)
+                        .append("div")
+                        .attr("id", loop_div_off);
+                    <!-- .append("p") -->
+                    <!-- .text(loop_div_off); -->
+
+                    // Div for entire ON loop
+                    var loop_div_on = "obs_div_on" + avg_power[i][0];
+                    d3.select("#" + loop_div)
+                        .append("div")
+                        .attr("id", loop_div_on);
+                    <!-- .append("p") -->
+                    <!-- .text(loop_div_on); -->
+
+                    // Div for events
+                    var loop_div_events = "obs_div_events" + avg_power[i][0];
+                    d3.select("#" + loop_div)
+                        .append("div")
+                        .attr("id", loop_div_events);
+                    <!-- .append("p") -->
+                    <!-- .text(loop_div_events); -->
+
+                    // Create divider
+                    d3.select("#report")
+                        .append("hr");
+                }
+            }
+
+        }
+
+        // Draw each loop's ON and OFF in report
+        function loop_overview() {
+            // Declare variables
+            var div; // Appropriate div to append loop OFF and ON to in report
+
+            // Run through each loop
+            for (var i = 0; i < loop_num_raw.length; i++) {
+
+                // Find beginning loop of FIRST loop (ex: 5,6 beginning loop returns 5)
+                var comma_index = loop_num_raw[i][2].indexOf(",");
+                var loop_no;
+                // No comma found - single loop
+                if (comma_index == -1) {
+                    loop_no = loop_num_raw[i][2];
+                } else { // Comma found - extract first loop (before first comma)
+                    loop_no = loop_num_raw[i][2].substring(0, comma_index);
+                }
+
+                // OFF loop
+                if (loop_state[loop_num_raw[i][0]] == false && loop_num_raw[i][2] != "-") {
+                    // Get appropriate div to append to
+                    div = "#obs_div_off" + loop_no;
+                    // Add loop number and ON/OFF to div
+                    d3.select(div)
+                        .append("p")
+                        .text("Loop " + loop_no + " powered OFF");
+                }
+                // ON loop
+                else if (loop_state[loop_num_raw[i][0]] == true && loop_num_raw[i][2] != "-") {
+                    // Get appropriate div to append to
+                    div = "#obs_div_on" + loop_no;
+                    // Add loop number and ON/OFF to div
+                    d3.select(div)
+                        .append("p")
+                        .text("Loop " + loop_no + " powered ON");
+                }
+
+                // Valid loop
+                if (loop_num_raw[i][2] != "-") {
+                    // Calculate domain and extension
+                    var dom = +loop_num_raw[i][1] - (+loop_num_raw[i][0] - 1); // Current domain
+                    var ext = 20; // Extra data displayed on either side - +100 is for if low area is small
+
+                    // Calculate begin index (to be graphed)
+                    var begin_index_r = +loop_num_raw[i][0] - ext;
+                    if (begin_index_r < 0) {
+                        begin_index_r = 0;
+                    }
+                    // Calculate end index (to be graphed)
+                    var end_index_r = +loop_num_raw[i][1] + ext;
+                    if (end_index_r > +freq_data_original.length - 1) {
+                        end_index_r = +freq_data_original.length - 1;
+                    }
+                    // Update domain
+                    dom = +x_dist[end_index_r - 1].dist - x_dist[begin_index_r].dist + 1;
+
+                    //
+                    svg2 = d3.select(div)
+                        .append("svg")
+                        .attr("width", 900)
+                        .attr("height", 450);
+
+                    // Width and height of graph
+                    var width = +svg2.attr("width") - margin.left - margin.right;
+                    var height = +svg2.attr("height") - margin.top - margin.bottom;
+
+                    var x = d3.scaleLinear().range([0, width]);
+                    var x2 = d3.scaleLinear().range([0, width]);
+                    var y = d3.scaleLinear().range([height, 0]);
+                    var y2 = d3.scaleLinear().range([height2, 0]);
+                    var graph_extra = Math.abs((+freq_max - +freq_min) / 2);
+
+                    //
+                    var xAxis = d3.axisBottom(x);
+                    var xAxis2 = d3.axisBottom(x2);
+                    var yAxis = d3.axisLeft(y);
+
+                    //
+                    var line = d3.line()
+                        .x(function(d, i) {
+                            return x(d.dist);
+                        })
+                        .y(function(d) {
+                            return y(d.freq);
+                        })
+
+                    //
+                    var line2 = d3.line()
+                        .x(function(d, i) {
+                            return x2(d.dist);
+                        })
+                        .y(function(d) {
+                            return y2(d.freq);
+                        })
+
+                    //
+                    var clip = svg2.append("defs").append("svg:clipPath")
+                        .attr("id", "clip2")
+                        .append("svg:rect")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .attr("x", 0)
+                        .attr("y", 0);
+
+                    //
+                    var Line_chart = svg2.append("g")
+                        .attr("class", "focus")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .attr("clip-path", "url(#clip2)");
+
+                    //
+                    var focus = svg2.append("g")
+                        .attr("class", "focus")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    //
+                    var context = svg2.append("g")
+                        .attr("class", "context")
+                        .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+                    //
+                    x.domain([x_dist[begin_index_r].dist, x_dist[end_index_r - 1].dist]);
+                    y.domain([+freq_min - graph_extra, +freq_max + graph_extra]);
+                    x2.domain(x.domain());
+                    y2.domain(y.domain());
+
+
+                    // add the X gridlines
+                    var x_grid_drawing = focus.append("g")
+                        .attr("class", "grid grid--x")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(make_x_gridlines(x)
+                            .tickSize(-height)
+                            .tickFormat("")
+                        );
+
+                    // add the Y gridlines
+                    var y_grid_drawing = focus.append("g")
+                        .attr("class", "grid grid--y")
+                        .call(make_y_gridlines(y)
+                            .tickSize(-width)
+                            .tickFormat("")
+                        );
+
+                    var x_axis_drawing = focus.append("g")
+                        .attr("class", "axis axis--x")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(xAxis);
+
+                    var y_axis_drawing = focus.append("g")
+                        .attr("class", "axis axis--y")
+                        .call(yAxis);
+
+                    var graph_line_r = Line_chart.append("path")
+                        .datum(x_dist)
+                        .attr("class", "line_m")
+                        .attr("d", line);
+
+                    // Run through each lh
+                    for (var j = 0; j < begin_index.length; j++) {
+                        // Fill
+                        focus.append("rect")
+                            .attr("class", "rect_r")
+                            .attr("width", function(d, k) {
+                                return +x(x_dist[end_index[j] - 1].dist) - x(x_dist[begin_index[j]].dist) + (+2 * rect_margin);
+                            })
+                            .attr("height", function() {
+                                return Math.abs(+y(max_signal[j]) - y(min_signal[j])) + (+2 * rect_margin);
+                            })
+                            .attr('x', function(d, k) {
+                                return +x(x_dist[begin_index[j]].dist) - rect_margin;
+                            })
+                            .attr("y", function(d, k) {
+                                return +y(max_signal[j]) - rect_margin;
+                            })
+                            .attr("clip-path", "url(#clip2)")
+                            .style("stroke-width", 0)
+                            .style("stroke", "black")
+                            .style("fill", "black")
+                            .style("opacity", "0.1");
+
+                        // Outline
+                        focus.append("rect")
+                            .attr("class", "rect_outline_r")
+                            .attr("width", function(d, k) {
+                                return +x(x_dist[end_index[j] - 1].dist) - x(x_dist[begin_index[j]].dist) + (+2 * rect_margin);
+                            })
+                            .attr("height", function() {
+                                return Math.abs(+y(max_signal[j]) - y(min_signal[j])) + (+2 * rect_margin);
+                            })
+                            .attr('x', function(d, k) {
+                                return +x(x_dist[begin_index[j]].dist) - rect_margin;
+                            })
+                            .attr("y", function(d, k) {
+                                return +y(max_signal[j]) - rect_margin;
+                            })
+                            .attr("clip-path", "url(#clip2)")
+                            .style("stroke-width", 1)
+                            .style("stroke", "black")
+                            .style("fill", "none")
+                            .style("opacity", "1");
+                    }
+
+                }
+            }
+        }
+
+        var win = document.getElementById("outer_graph");
+
+        win.onscroll = function(ev) {
+            if (win.scrollTop === (win.scrollHeight - win.offsetHeight)) {
+                //
+                update_CSV_table();
+            }
+        };
+
+        // Update maximum and minimum signal strength of modified and original signal strength data
+        function update_max_min() {
+            // Find max/min of modified signal strength data
+            for (i = 0; i < freq_data.length; i++) {
+                //
+                if (+freq_data[i] > +freq_max || i == 0) {
+                    freq_max = freq_data[i]
+                }
+                //
+                if (+freq_data[i] < +freq_min || i == 0) {
+                    freq_min = freq_data[i]
+                }
+            }
+
+            // Find max/min of original signal strength data
+            for (i = 0; i < freq_data_original.length; i++) {
+                //
+                if (+freq_data_original[i] > +freq_original_max || i == 0) {
+                    freq_original_max = freq_data_original[i]
+                }
+                //
+                if (+freq_data_original[i] < +freq_original_min || i == 0) {
+                    freq_original_min = freq_data_original[i]
+                }
+            }
+        }
+
+
+
+        // moving_num_change == 0 means that threshold max/min has been changed
+        function moving_avg(moving_num_change, set) {
+            //
+            var valid = true;
+            var valid_index;
+
+            // Reset freq_data
+            if (set == "s") {
+                if (moving_num_s == 1 && moving_num_change <= -1) {
+                    valid = false; // Do not want to recalculate if will not change
+                } else if (moving_num_s + moving_num_change < 1) {
+                    moving_num_s = 1;
+                } else {
+                    moving_num_s += +moving_num_change;
+                }
+
+                //
+                if (true == valid) {
+                    //
+                    freq_data_s = [];
+                    crossover = [];
+                }
+            } else if (set == "l") {
+                if (moving_num_l == 1 && moving_num_change <= -1) {
+                    valid = false; // Do not want to recalculate if will not change
+                } else if (moving_num_l + moving_num_change < 1) {
+                    moving_num_l = 1;
+                } else {
+                    moving_num_l += +moving_num_change;
+                }
+
+                //
+                if (true == valid) {
+                    //
+                    freq_data_l = [];
+                    lh_h = [];
+                    lh_l = [];
+                }
+            } else if (set == "m") {
+                if (moving_num == 1 && moving_num_change <= -1) {
+                    valid = false; // Do not want to recalculate if will not change
+                } else if (moving_num + moving_num_change < 1) {
+                    moving_num = 1;
+                } else {
+                    moving_num += +moving_num_change;
+                }
+
+                //
+                if (true == valid) {
+                    //
+                    freq_data = [];
+                }
+            }
+
+            //
+            if (true == valid) {
+                //
+                var num_additions = 0;
+                var extend; // KRML this is to include 'future' data in average
+                var data_queue = []; // Stores all raw data points used to calculate the MA for a single point
+                var front; // Front index of queue
+                var back; // Back index of queue
+                var queue_size = +moving_num + 1; // Size of queue
+
+                // Run through each data point
+                for (i = 0; i < freq_data_original.length; i++) {
+                    num_additions = 0;
+
+                    // Modified data set
+                    if (set == "m") {
+                        //
+                        extend = Math.floor(moving_num / 2);
+
+                        // First point (moving avg)
+                        // KRML this if is for the first data pass and sets up the averaging queue
+                        if (i == 0) {
+                            // Reset variables
+                            freq_data[i] = 0;
+                            // Use first half of points
+                            for (j = 0; j < (extend + 1); j++) {
+                                <!-- freq_data[i] += +freq_data_original[j] / (extend + 1); -->
+                                // Add starting points to queue
+                                data_queue[j] = +freq_data_original[j];
+
+                                // Update moving average
+                                freq_data[i] += +data_queue[j] / (extend + 1);
+                            }
+                            // Assign front and back to queue
+                            front = 0;
+                            back = extend;
+                        }
+                        // Numeber of points in range are less than moving_num, increasing
+                        // KRML this if is for the first few data pass and sets up the averaging queue
+                        else if (i < extend + 1) // Note: first half have been added, but i is at beginning. Now adding half way forward
+                        {
+                            <!-- freq_data[i] = +freq_data[i-1]; -->
+                            <!-- freq_data[i] *= +(+extend + 1) + i - 1; -->
+                            <!-- freq_data[i] += +freq_data_original[+i + extend]; -->
+                            <!-- freq_data[i] /= (+extend + 1 + i); -->
+
+                            // Enqueue
+                            back = +back + 1; // Update back
+                            if (back >= queue_size) {
+                                back = 0;
+                            }
+                            data_queue[back] = freq_data_original[+i + extend]; // Enqueue
+
+                            // Update moving average
+                            freq_data[i] = +freq_data[i - 1];
+                            freq_data[i] *= +(+extend + 1) + i - 1;
+                            freq_data[i] += +data_queue[back];
+                            freq_data[i] /= (+extend + 1 + i);
+                        }
+                        // Number of points in range equal moving num - in the middle of data set
+                        else if (i >= extend + 1 && i <= (+freq_data_original.length - extend - 1)) {
+                            <!-- freq_data[i] = +freq_data[i-1]; -->
+                            <!-- freq_data[i] -= +freq_data_original[+i - extend - 1] / moving_num; -->
+                            <!-- freq_data[i] += +freq_data_original[+i + extend] / moving_num; -->
+
+                            // Enqueue
+                            back = +back + 1; // Update back
+                            if (back >= queue_size) {
+                                back = 0;
+                            }
+                            data_queue[back] = freq_data_original[+i + extend]; // Enqueue
+
+                            // Update moving average
+                            freq_data[i] = +freq_data[i - 1];
+                            freq_data[i] -= +data_queue[front] / moving_num;
+                            freq_data[i] += +data_queue[back] / moving_num;
+
+                            // Dequeue
+                            data_queue[front] = "-";
+                            front = +front + 1;
+                            if (front >= queue_size) {
+                                front = 0;
+                            }
+                        }
+                        // Number of points in range is less than moving num, decreasing
+                        else if (i > +freq_data_original.length - extend - 1) {
+                            //
+                            var from_end = +freq_data_original.length - 1 - i;
+
+                            //
+                            <!-- freq_data[i] = +freq_data[i-1]; -->
+                            <!-- freq_data[i] *= +(+extend + 1) + from_end + 1; -->
+                            <!-- freq_data[i] -= +freq_data_original[i - extend - 1]; -->
+                            <!-- freq_data[i] /= +(+extend + 1) + from_end; -->
+
+                            // Update moving average
+                            freq_data[i] = +freq_data[i - 1];
+                            freq_data[i] *= +(+extend + 1) + from_end + 1;
+                            freq_data[i] -= +data_queue[front];
+                            freq_data[i] /= +(+extend + 1) + from_end;
+
+                            // Dequeue
+                            data_queue[front] = "-";
+                            front = +front + 1;
+                            if (front >= queue_size) {
+                                front = 0;
+                            }
+                        } else {
+                            freq_data[i] = 0;
+                        }
+                    }
+                    // Small moving average (for crossovers)
+                    else if (set == "s") {
+                        //
+                        extend = Math.floor(moving_num_s / 2);
+
+                        // First point (moving avg)
+                        if (i == 0) {
+                            //
+                            freq_data_s[i] = 0;
+                            //
+                            for (j = 0; j < (extend + 1); j++) {
+                                freq_data_s[i] += +freq_data_original[j] / (extend + 1);
+                            }
+                        } else if (i < extend + 1) {
+                            //
+                            freq_data_s[i] = +freq_data_s[i - 1];
+                            freq_data_s[i] *= +(+extend + 1) + i - 1;
+                            freq_data_s[i] += +freq_data_original[+i + extend];
+                            freq_data_s[i] /= (+extend + 1 + i);
+                        } else if (i >= extend + 1 && i <= (+freq_data_original.length - extend - 1)) {
+                            freq_data_s[i] = +freq_data_s[i - 1];
+                            freq_data_s[i] -= +freq_data_original[+i - extend - 1] / moving_num_s;
+                            freq_data_s[i] += +freq_data_original[+i + extend] / moving_num_s;
+                        } else if (i > +freq_data_original.length - extend - 1) {
+                            //
+                            var from_end = +freq_data_original.length - 1 - i;
+
+                            //
+                            freq_data_s[i] = +freq_data_s[i - 1];
+                            freq_data_s[i] *= +(+extend + 1) + from_end + 1;
+                            freq_data_s[i] -= +freq_data_original[i - extend - 1];
+                            freq_data_s[i] /= +(+extend + 1) + from_end;
+                        } else {
+                            freq_data_s[i] = 0;
+                        }
+                    }
+                    // Large moving average (for signal drops)
+                    else if (set == "l") {
+                        //
+                        extend = Math.floor(moving_num_l / 2);
+
+                        // First point (moving avg)
+                        if (i == 0) {
+                            //
+                            freq_data_l[i] = 0;
+                            //
+                            for (j = 0; j < (extend + 1); j++) {
+                                //
+                                if (freq_data_original[j] <= threshold_high && freq_data_original[j] >= threshold_low) {
+                                    freq_data_l[i] += +freq_data_original[j] / (extend + 1);
+                                } else {
+                                    freq_data_l[i] += +(+(+threshold_high + threshold_low) / 2) / (extend + 1);
+                                }
+                            }
+
+                            //
+                            valid_index = 0;
+                        } else if (i < extend + 1) {
+                            //
+                            freq_data_l[i] = +freq_data_l[i - 1];
+                            if (freq_data_original[+i + extend] <= threshold_high && freq_data_original[+i + extend] >= threshold_low) { // Large moving avg ignores points beyond abs threshold
+                                freq_data_l[i] *= +(+extend + 1) + i - 1;
+                                freq_data_l[i] += +freq_data_original[+i + extend];
+                                freq_data_l[i] /= (+extend + 1 + i);
+                            }
+                        } else if (i >= extend + 1 && i <= (+freq_data_original.length - extend - 1)) {
+                            freq_data_l[i] = +freq_data_l[i - 1];
+
+                            if ((freq_data_original[+i - extend - 1] <= threshold_high && freq_data_original[+i - extend - 1] >= threshold_low) &&
+                                (freq_data_original[+i + extend] <= threshold_high && freq_data_original[+i + extend] >= threshold_low)) {
+                                valid_index = i;
+                            }
+
+                            if (freq_data_original[+i - extend - 1] <= threshold_high && freq_data_original[+i - extend - 1] >= threshold_low) { // Large moving avg ignores points beyond abs threshold
+                                freq_data_l[i] -= +freq_data_original[+i - extend - 1] / moving_num_l;
+                            } else {
+                                if (i < moving_num) { // Initially, points beyond threshold counted as middle of abs thresholds
+                                    freq_data_l[i] -= +(+(+threshold_high + threshold_low) / 2) / (extend + 1);
+                                } else {
+                                    freq_data_l[i] -= freq_data_l[valid_index] / moving_num_l;
+                                }
+                            }
+
+                            if (freq_data_original[+i + extend] <= threshold_high && freq_data_original[+i + extend] >= threshold_low) {
+                                freq_data_l[i] += +freq_data_original[+i + extend] / moving_num_l;
+                            } else {
+                                freq_data_l[i] += freq_data_l[valid_index] / moving_num_l;
+                            }
+                        } else if (i > +freq_data_original.length - extend - 1) {
+                            //
+                            var from_end = +freq_data_original.length - 1 - i;
+
+                            //
+                            freq_data_l[i] = +freq_data_l[i - 1];
+                            if (freq_data_original[i - extend - 1] <= threshold_high && freq_data_original[i - extend - 1] >= threshold_low) { // Large moving avg ignores points beyond abs threshold
+                                freq_data_l[i] *= +(+extend + 1) + from_end + 1;
+                                freq_data_l[i] -= +freq_data_original[i - extend - 1];
+                                freq_data_l[i] /= +(+extend + 1) + from_end;
+                            }
+                        } else {
+                            freq_data_l[i] = 0;
+                        }
+                    }
+                }
+
+                // Calculate thresholds
+                for (i = 0; i < freq_data_original.length; i++) {
+                    //
+                    if (set == "s") {
+                        crossover_l[i] = freq_data_s[i] - threshold_l_c;
+                    } else if (set == "l") {
+                        lh_h[i] = freq_data_l[i] + threshold_l_h;
+                        lh_l[i] = freq_data_l[i] - threshold_l_l;
+                    }
+                }
+
+                //
+                if (set == "s") {
+                    //
+                    update_data("moving_avg");
+
+                    //
+                    document.getElementById("moving_avg_display_s")
+                        .innerHTML = "Moving average (crossover): " + moving_num_s;
+                }
+                //
+                else if (set == "l") {
+                    //
+                    update_data("moving_avg");
+
+                    //
+                    document.getElementById("moving_avg_display_l")
+                        .innerHTML = "Moving average (low/high): " + moving_num_l;
+                }
+                //
+                else if (set == "m") {
+                    //
+                    update_data("moving_avg");
+
+                    //
+                    document.getElementById("moving_avg_display_m")
+                        .innerHTML = "Moving average (modified): " + moving_num;
+                }
+
+            }
+
+
+        }
+
+        // Updates upper and lower absolute thresholds displayed on graph. Uses data in global variables to apply updates.
+        function update_threshold() {
+            //
+            y_max = +freq_max + +graph_extra;
+            y_min = +freq_min - +graph_extra;
+            y_range = Math.abs(y_max - y_min);
+
+            // TEMPORARY - For displaying original graph simulatenously
+            y_max = +freq_original_max + +graph_extra;
+            y_min = +freq_original_min - +graph_extra;
+            y_range = Math.abs(y_max - y_min);
+
+            // Exceeded other threshold
+            if (threshold_high < threshold_low) {
+                threshold_high = threshold_low;
+            }
+            //
+            if (threshold_low > threshold_high) {
+                threshold_low = threshold_high;
+            }
+
+            // Exceeded other threshold
+            if (threshold_high > y_max) {
+                threshold_high = y_max;
+            }
+            //
+            if (threshold_high < y_min) {
+                threshold_high = y_min;
+            }
+
+            // Exceeded graph limits
+            if (threshold_low > y_max) {
+                threshold_low = y_max;
+            }
+            if (threshold_low < y_min) {
+                threshold_low = y_min;
+            }
+
+            // Round to nearest integer
+            threshold_high = Math.round(threshold_high);
+            threshold_low = Math.round(threshold_low);
+
+            //
+            max_height = (+y_max - +threshold_high) * (+height / +y_range);
+            min_height = (+y_max - +threshold_low) * (+height / +y_range);
+
+            draw_threshold();
+
+            // Update settings displayed in analysis section
+            document.getElementById("display_th_high")
+                .innerHTML = "Threshold max (abs): " + threshold_high;
+            //
+            document.getElementById("display_th_low")
+                .innerHTML = "Threshold min (abs): " + threshold_low;
+        }
+
+        // Applies change to upper absolute threshold and displays new threshold on graph
+        function change_threshold_high(change) {
+            //
+            line_upper.remove();
+
+            //
+            threshold_high += +change;
+
+            //
+            if (threshold_high < threshold_low) {
+                threshold_high = threshold_low;
+            }
+
+            //
+            if (threshold_high > y_max) {
+                threshold_high = y_max;
+            }
+            //
+            if (threshold_high < y_min) {
+                threshold_high = y_min;
+            }
+
+            //
+            <!-- if (threshold_low > y_max) -->
+            <!-- { -->
+            <!-- threshold_low = y_max; -->
+            <!-- } -->
+            <!-- if (threshold_low < y_min) -->
+            <!-- { -->
+            <!-- threshold_low = y_min; -->
+            <!-- } -->
+
+            // Round to 1 decimal place
+            //threshold_high = Math.round(threshold_high * 10) / 10;
+            //threshold_low = Math.round(threshold_low * 10) / 10;
+
+            // Round to nearest integer
+            threshold_high = Math.round(threshold_high);
+            <!-- threshold_low = Math.round(threshold_low); -->
+
+            //
+            max_height = (+y_max - +threshold_high) * (+height / +y_range);
+
+            line_upper = focus.append("line")
+                .attr("x1", 0)
+                .attr("y1", max_height)
+                .attr("x2", width)
+                .attr("y2", max_height)
+                .style("stroke-width", 1)
+                .style("stroke", "green")
+                .style("fill", "none");
+
+            //
+            document.getElementById("display_th_high")
+                .innerHTML = "Threshold max (abs): " + threshold_high;
+        }
+        // Applies change to lower absolute threshold and displays new threshold on graph
+        function change_threshold_low(change) {
+            //
+            line_lower.remove();
+
+            //
+            threshold_low += +change;
+
+            //
+            if (threshold_low > threshold_high) {
+                threshold_low = threshold_high;
+            }
+
+            <!-- // -->
+            <!-- if (threshold_high > y_max) -->
+            <!-- { -->
+            <!-- threshold_high = y_max; -->
+            <!-- } -->
+            <!-- // -->
+            <!-- if (threshold_high < y_min) -->
+            <!-- { -->
+            <!-- threshold_high = y_min; -->
+            <!-- } -->
+
+            //
+            if (threshold_low > y_max) {
+                threshold_low = y_max;
+            }
+            if (threshold_low < y_min) {
+                threshold_low = y_min;
+            }
+
+            // Round to 1 decimal place
+            //threshold_high = Math.round(threshold_high * 10) / 10;
+            //threshold_low = Math.round(threshold_low * 10) / 10;
+
+            // Round to nearest integer
+            <!-- threshold_high = Math.round(threshold_high); -->
+            threshold_low = Math.round(threshold_low);
+
+            //
+            min_height = (+y_max - +threshold_low) * (+height / +y_range);
+
+            line_lower = focus.append("line")
+                .attr("x1", 0)
+                .attr("y1", min_height)
+                .attr("x2", width)
+                .attr("y2", min_height)
+                .style("stroke-width", 1)
+                .style("stroke", "green")
+                .style("fill", "none");
+
+            //
+            document.getElementById("display_th_low")
+                .innerHTML = "Threshold min (abs): " + threshold_low;
+        }
+
+        // Assign each data point a value of either true or false. True indicates that the point has a signal
+        // strength within an expected range and false means the data point has a signal strength above or below
+        // the thresholds for 'consecutive' amount of times in a row. Essentially assigns if the signal strength
+        // is an unexpected drop or rise in strength.
+        function lh_state() {
+            //
+            //consecutive = 5; // Number of consecutive low/high required to toggle state
+            state = []; // state of each data point. true = in range, false = low/high
+            //var curr_state = true;
+
+            // Set state to true (default)
+            for (i = 0; i < +freq_data.length; i++) {
+                //
+                state[i] = true;
+            }
+
+            //
+            normal_strength = true; // For a set of 5 consecutive data points
+
+            // Loop for each data point (excluding end points)
+            // NOTE: freq_data changes with 'moving average'
+            for (var i = 0; i < (freq_data.length - consecutive + 1); i++) {
+                // Reset strength check
+                // normal_strength = false; // Assume low/high
+
+                if (true == normal_strength) {
+                    //
+                    normal_strength = false; // Stays false if never seen as true
+
+                    // Check following points (only 1 must be true to maintain true)
+                    for (var j = 0; j < consecutive; j++) {
+                        // Valid strength
+                        if (true == check_range(+i + j)) {
+                            normal_strength = true;
+                        }
+                    }
+                } else if (false == normal_strength) {
+                    //
+                    normal_strength = true; // Stays true if never seen as false
+
+                    // Check following points (only 1 must be false to maintain false)
+                    for (var j = 0; j < consecutive; j++) {
+                        // Valid strength
+                        if (false == check_range(+i + j)) {
+                            normal_strength = false;
+                        }
+                    }
+                }
+
+                //
+                for (var j = 0; j < consecutive; j++) {
+                    // Set statuses to false (low/high) for each consecutive point
+                    state[+i + j] = normal_strength;
+                }
+
+            }
+        }
+
+        // Check if signal strength at specified data point is within the upper and lower low/high signal thresholds.
+        // Return result as true or false.
+        function check_range(index) {
+            //
+            var result;
+
+            // High/low and NOT powered off
+            if ((freq_data[index] > lh_h[index] || freq_data[index] < lh_l[index]) && loop_state[index] != false) {
+                result = false;
+            }
+            // Valid strength
+            else {
+                result = true;
+            }
+
+            //
+            return result;
+        }
+
+        // Changes value of consecutive and also displays new value in settings in the analysis section
+        // Change is based on user inputted change: function applies change to current value.
+        function change_consecutive(change) {
+            // Add user-inputted change to consecutive
+            consecutive += +change;
+
+            // Display result in settings
+            document.getElementById("consecutive_display")
+                .innerHTML = "Persistency: " + consecutive;
+        }
+
+        // Mouse is hovered over the graph interactive graph in the analysis section. Applies changes to graph
+        // such as updating cursors to follow the mouse while it is over the graph.
+        function mouseover() {
+            if (graph_count >= 2) {
+                // freq_data_original
+                if (true == document.getElementById("graph_cursor").checked && true == document.getElementById("graph_o").checked) {
+                    focus_pnt_o.style("opacity", 1)
+                    focusText_o.style("opacity", 1)
+                } else {
+                    focus_pnt_o.style("opacity", 0)
+                    focusText_o.style("opacity", 0)
+                }
+
+                // freq_data modified
+                if (true == document.getElementById("graph_cursor").checked && true == document.getElementById("graph_m").checked) {
+                    focus_pnt.style("opacity", 1)
+                    focusText.style("opacity", 1)
+                } else {
+                    focus_pnt.style("opacity", 0)
+                    focusText.style("opacity", 0)
+                }
+
+                // freq_data small
+                if (true == document.getElementById("graph_cursor").checked && true == document.getElementById("graph_s").checked) {
+                    focus_pnt_s.style("opacity", 1)
+                    focusText_s.style("opacity", 1)
+                } else {
+                    focus_pnt_s.style("opacity", 0)
+                    focusText_s.style("opacity", 0)
+                }
+
+                // freq data large
+                if (true == document.getElementById("graph_cursor").checked && true == document.getElementById("graph_l").checked) {
+                    focus_pnt_l.style("opacity", 1)
+                    focusText_l.style("opacity", 1)
+                } else {
+                    focus_pnt_l.style("opacity", 0)
+                    focusText_l.style("opacity", 0)
+                }
+            }
+        }
+
+        // Mouse is moved over the graph interactive graph in the analysis section. Applies changes to graph
+        // such as updating cursors to follow the mouse while it is moving over the graph.
+        function mousemove() {
+            //
+            mouseover();
+
+            // recover coordinate we need
+            var x0 = x.invert(d3.mouse(this)[0]);
+            var i = d3.bisect(x_val, x0, 1);
+            var j = d3.bisect(x_dist_x, i, 1);
+            selectedData = freq_data[i]
+
+            //console.log("i: " + i + "  x0: " + x0 + " " + x_val);
+
+            // Sort y values
+            <!-- var val = [freq_data_original[i], freq_data_s[i], freq_data_l[i]]; -->
+            <!-- val.sort(function(a,b) { return +b - a; }); -->
+
+            <!-- // Calculate offset -->
+            <!-- var offset = []; -->
+            <!-- for (var j=0 ; j < val.length ; j++) -->
+            <!-- { -->
+            <!-- if (j == 0) -->
+            <!-- { -->
+            <!-- offset[j] = 0; -->
+            <!-- } -->
+            <!-- else if (val[j] > (val[j-1] - offset[j-1]) - 10) -->
+            <!-- { -->
+            <!-- offset[j] = 10 - ((val[j-1] - offset[j-1]) - val[j]); -->
+            <!-- } -->
+            <!-- else -->
+            <!-- { -->
+            <!-- offset[j] = 0; -->
+            <!-- } -->
+            <!-- } -->
+
+            <!-- // -->
+            <!-- var o = false; -->
+            <!-- var s = false; -->
+            <!-- var l = false; -->
+
+            // Print
+            <!-- for (var j=0 ; j < val.length ; j++) -->
+            <!-- { -->
+            <!-- if (val[j] == freq_data_original[i] && false == o) -->
+            <!-- { -->
+            <!-- o = true; -->
+            <!-- focus_pnt_o -->
+            <!-- .attr("cx", x(x_val[i]) + margin.left) -->
+            <!-- .attr("cy", y(freq_data_original[i]) + margin.top) -->
+            <!-- focusText_o -->
+            <!-- .html("x:" + x_val[i] + "  -  " + "y:" + freq_data_original[i]) -->
+            <!-- .attr("x", x(x_val[i]) + margin.left + 15) -->
+            <!-- .attr("y", y(freq_data_original[i]) + offset[j]) -->
+            <!-- } -->
+            <!-- else if (val[j] == freq_data_s[i] && false == s) -->
+            <!-- { -->
+            <!-- s = true; -->
+            <!-- focus_pnt_s -->
+            <!-- .attr("cx", x(x_val[i]) + margin.left) -->
+            <!-- .attr("cy", y(freq_data_s[i]) + margin.top) -->
+            <!-- focusText_s -->
+            <!-- .html("x:" + x_val[i] + "  -  " + "y:" + freq_data_s[i]) -->
+            <!-- .attr("x", x(x_val[i]) + margin.left + 15) -->
+            <!-- .attr("y", y(freq_data_s[i]) + offset[j]) -->
+            <!-- } -->
+            <!-- else if (val[j] == freq_data_l[i] && false == l) -->
+            <!-- { -->
+            <!-- l = true; -->
+            <!-- focus_pnt_l -->
+            <!-- .attr("cx", x(x_val[i]) + margin.left) -->
+            <!-- .attr("cy", y(freq_data_l[i]) + margin.top) -->
+            <!-- focusText_l -->
+            <!-- .html("x:" + x_val[i] + "  -  " + "y:" + freq_data_l[i]) -->
+            <!-- .attr("x", x(x_val[i]) + margin.left + 15) -->
+            <!-- .attr("y", y(freq_data_l[i]) + offset[j]) -->
+            <!-- } -->
+            <!-- } -->
+
+
+            <!-- focus_pnt -->
+            <!-- .attr("cx", x(x_val[i]) + margin.left) -->
+            <!-- .attr("cy", y(freq_data[i]) + margin.top) -->
+            <!-- focusText -->
+            <!-- .html("x:" + x_val[i] + "  -  " + "y:" + freq_data[i]) -->
+            <!-- .attr("x", x(x_val[i]) + margin.left + 15) -->
+            <!-- .attr("y", y(freq_data[i])) -->
+
+            focus_pnt
+                .attr("cx", x(x_val[i]) + margin.left)
+                .attr("cy", y(x_dist[j].freq) + margin.top)
+            focusText
+                .html("Trace # " + j + ", " + "Distance: "+ x_val[i] + ", " + '<br><br>' + "Signal/Noise: " + +Math.round(+freq_data[i] * 100) / 100 + " dBm")
+                .attr("x", x(x_val[i]) + margin.left)
+                .attr("y", y(+y_max - +margin.top * 1.5));
+        }
+
+        // Mouse is moved out of the interactive graph in the analysis section. Applies changes to graph
+        // such as removing cursors and text when moving mouse out of graph.
+        function mouseout() {
+            // freq_data_original
+            focus_pnt_o.style("opacity", 0)
+            focusText_o.style("opacity", 0)
+
+            // freq_data
+            focus_pnt.style("opacity", 0)
+            focusText.style("opacity", 0)
+
+            // freq_data_s
+            focus_pnt_s.style("opacity", 0)
+            focusText_s.style("opacity", 0)
+
+            // freq_data_l
+            focus_pnt_l.style("opacity", 0)
+            focusText_l.style("opacity", 0)
+        }
+
+        // Update crossover threshold based on user-inputted change. Display new number in settings.
+        function update_crossover_l(change) {
+            //
+            threshold_l_c += change;
+            // Calculate new crossover_l
+            for (var i = 0; i < freq_data_original.length; i++) {
+                crossover_l[i] -= change;
+            }
+
+            //
+            document.getElementById("crossover_l")
+                .innerHTML = "Threshold min (crossover): " + threshold_l_c;
+
+            //
+            draw_data();
+        }
+        // Update high signal threshold based on user inputted change. Display new number in settings.
+        function update_lh_h(change) {
+            //
+            threshold_l_h += change;
+            // Calculate new crossover_l
+            for (var i = 0; i < freq_data_original.length; i++) {
+                lh_h[i] += change;
+            }
+
+            //
+            document.getElementById("lh_h")
+                .innerHTML = "Threshold max (low/high): " + threshold_l_h;
+
+            //
+            draw_data();
+        }
+        // Update low signal threshold based on user inputted change. Display new number in settings.
+        function update_lh_l(change) {
+            //
+            threshold_l_l += change;
+            // Calculate new crossover_l
+            for (var i = 0; i < freq_data_original.length; i++) {
+                lh_l[i] -= change;
+            }
+
+            //
+            document.getElementById("lh_l")
+                .innerHTML = "Threshold min (low/high): " + threshold_l_l;
+
+            //
+            draw_data();
+        }
+
+        // Finds all loops based on signal strength data. Differentiates loops between being powered
+        // on and powered off.
+        function find_loops() {
+            // Assign each data point a value of either true or false. True is powered ON, false is powered OFF
+            lh_state();
+            loop_state = state; // Store states in loop_state
+
+            //
+            //d3.selectAll("#table_loops > *").remove();
+
+            //
+            //var table = document.getElementById("table_loops");
+
+            // Declare variables
+            var row;
+            var cell = [];
+            var num_beginning = 0;
+            var num_end = 0;
+            var ended = false;
+
+            // Reset variables
+            begin_index_on = [];
+            end_index_on = [];
+            max_signal_on = []; // For single high/low
+            min_signal_on = []; // For single high/low
+            begin_index_off = [];
+            end_index_off = [];
+            max_signal_off = []; // For single high/low
+            min_signal_off = []; // For single high/low
+
+            // Title
+            <!-- row = table.insertRow(-1); -->
+            <!-- // -->
+            <!-- cell = row.insertCell(-1); -->
+            <!-- cell.innerHTML = "Beginning"; -->
+            <!-- // -->
+            <!-- cell = row.insertCell(-1); -->
+            <!-- cell.innerHTML = "End"; -->
+
+            // OFF
+            for (var i = 0; i < state.length; i++) {
+                // Beginning of low/high
+                if ((i == 0 && false == state[i]) || (true == state[i - 1] && false == state[i])) // Prev: normal, Curr: high/low
+                {
+                    /*//
+                    row = table.insertRow(-1);
+					
+                    //
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = i;*/
+
+                    //
+                    begin_index_off[num_beginning] = i;
+
+                    //
+                    num_beginning += +1;
+
+                    //
+                    max_signal_off[num_beginning - 1] = freq_data[i];
+                    min_signal_off[num_beginning - 1] = freq_data[i];
+
+                }
+                // End of low/high
+                if ((i == state.length - 1 && false == state[i] && num_beginning > num_end) || (true == state[i + 1] && false == state[i])) // Next: normal, Curr: high/low
+                {
+                    /*//
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = i;*/
+
+                    //
+                    end_index_off[num_end] = i;
+
+                    //
+                    num_end += +1;
+
+                    //
+                    ended = true;
+                }
+
+                // In middle of high/low
+                if (num_beginning > num_end || true == ended) {
+                    //
+                    if (+freq_data[i] > +max_signal_off[num_beginning - 1]) {
+                        max_signal_off[num_beginning - 1] = freq_data[i];
+                    }
+                    //
+                    if (+freq_data[i] < +min_signal_off[num_beginning - 1]) {
+                        min_signal_off[num_beginning - 1] = freq_data[i];
+                    }
+
+                    //
+                    ended = false;
+                }
+            }
+
+
+
+            // Declare variables
+            num_beginning = 0;
+            num_end = 0;
+            ended = false;
+
+            // ON
+            for (var i = 0; i < state.length; i++) {
+                // Beginning of low/high
+                if ((i == 0 && true == state[i]) || (false == state[i - 1] && true == state[i])) // Prev: normal, Curr: high/low
+                {
+                    /*//
+                    row = table.insertRow(-1);
+					
+                    //
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = i;*/
+
+                    //
+                    begin_index_on[num_beginning] = i;
+
+                    //
+                    num_beginning += +1;
+
+                    //
+                    max_signal_on[num_beginning - 1] = freq_data[i];
+                    min_signal_on[num_beginning - 1] = freq_data[i];
+
+                }
+                // End of low/high
+                if ((i == state.length - 1 && true == state[i] && num_beginning > num_end) || (false == state[i + 1] && true == state[i])) // Next: normal, Curr: high/low
+                {
+                    /*//
+                    cell = row.insertCell(-1);
+                    cell.innerHTML = i;*/
+
+                    //
+                    end_index_on[num_end] = i;
+
+                    //
+                    num_end += +1;
+
+                    //
+                    ended = true;
+                }
+
+                // In middle of high/low
+                if (num_beginning > num_end || true == ended) {
+                    //
+                    if (+freq_data[i] > +max_signal_on[num_beginning - 1]) {
+                        max_signal_on[num_beginning - 1] = freq_data[i];
+                    }
+                    //
+                    if (+freq_data[i] < +min_signal_on[num_beginning - 1]) {
+                        min_signal_on[num_beginning - 1] = freq_data[i];
+                    }
+
+                    //
+                    ended = false;
+                }
+            }
+
+            // Combine ON and OFF into single array
+            for (var i = 0; i < +begin_index_on.length + begin_index_off.length; i++) {
+                // ON first
+                if (begin_index_on[0] < begin_index_off[0]) {
+                    // Even: i=0,2,4,etc.
+                    if (+i % 2 == 0) {
+                        // ON -> combined
+                        begin_index[i] = begin_index_on[i / 2];
+                        end_index[i] = end_index_on[i / 2];
+                        max_signal[i] = max_signal_on[i / 2];
+                        min_signal[i] = min_signal_on[i / 2];
+                    }
+                    // Odd: i=1,3,5,etc.
+                    else {
+                        // OFF -> combined
+                        begin_index[i] = begin_index_off[Math.floor(i / 2)];
+                        end_index[i] = end_index_off[Math.floor(i / 2)];
+                        max_signal[i] = max_signal_off[Math.floor(i / 2)];
+                        min_signal[i] = min_signal_off[Math.floor(i / 2)];
+                    }
+                }
+                // OFF first
+                else {
+                    // Even: i=0,2,4,etc.
+                    if (+i % 2 == 0) {
+                        // OFF -> combined
+                        begin_index[i] = begin_index_off[i / 2];
+                        end_index[i] = end_index_off[i / 2];
+                        max_signal[i] = max_signal_off[i / 2];
+                        min_signal[i] = min_signal_off[i / 2];
+                    }
+                    // Odd: i=1,3,5,etc.
+                    else {
+                        // ON -> combined
+                        begin_index[i] = begin_index_on[Math.floor(i / 2)];
+                        end_index[i] = end_index_on[Math.floor(i / 2)];
+                        max_signal[i] = max_signal_on[Math.floor(i / 2)];
+                        min_signal[i] = min_signal_on[Math.floor(i / 2)];
+                    }
+                }
+
+                //
+                <!-- row = table.insertRow(-1); -->
+                <!-- // -->
+                <!-- cell = row.insertCell(-1); -->
+                <!-- cell.innerHTML = begin_index[i]; -->
+                <!-- // -->
+                <!-- cell = row.insertCell(-1); -->
+                <!-- cell.innerHTML = end_index[i]; -->
+            }
+
+            //
+            draw_loops();
+
+            //
+            //input_loop();
+            //
+            //loops_report();
+        }
+
+        // Draw uncertainty ranges for each loop in analysis section
+        function draw_range() {
+            // Remove previous indicators
+            d3.selectAll("rect.range").remove();
+            d3.selectAll("rect.range_outline").remove();
+
+            for (var i = 0; i < range_bound.length; i++) {
+                var bound = range_bound[i];
+                for (var j = 0; j < bound.length;) {
+                    var start = bound[j++];
+                    var end = bound[j++];
+                    var rect_width = end - start;
+
+                    focus.append("rect")
+                        .attr("class", "range")
+                        .attr("width", function(d, j) {
+                            range_end.push(end);
+                            return +x(x_dist[end].dist) - x(x_dist[start].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return (Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin)) / 2;
+                        })
+                        .attr('x', function(d, j) {
+                            range_start.push(start);
+                            return +x(x_dist[start].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - (1 * rect_margin) +
+                                ((Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin)) / 4);
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 0)
+                        .style("stroke", "red")
+                        .style("fill", "black")
+                        .style("opacity", "0.1");
+
+                    // Outline
+                    focus.append("rect")
+                        .attr("class", "range_outline")
+                        .attr("width", function(d, j) {
+                            range_outline_end.push(end);
+                            return +x(x_dist[end].dist) - x(x_dist[start].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return (Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin)) / 2;
+                        })
+                        .attr('x', function(d, j) {
+                            range_outline_start.push(start);
+                            return +x(x_dist[start].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - (1 * rect_margin) +
+                                ((Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin)) / 4);
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 1)
+                        .style("stroke", "red")
+                        .style("fill", "none")
+                        .style("opacity", "1");
+                }
+            }
+        }
+
+        // Draw loops on interactive graph in alaysis section. Creates a box around the loop to indicates
+        // the location of each individual loop.
+        function draw_loops() {
+            // Remove previous indicators
+            d3.selectAll("rect.rect").remove();
+            d3.selectAll("rect.rect_outline").remove();
+
+	    //console.log(x_dist)
+	    
+            //
+            //threshold_avg = +0.5*(+threshold_high + threshold_low);
+            //
+            for (var i = 0; i < begin_index.length; i++) {
+                // Highlight loop to be entered in red
+                if (i == loop_num.length) {
+                    // Fill
+                    focus.append("rect")
+                        .attr("class", "rect")
+                        .attr("width", function(d, j) {
+                            return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                        })
+                        .attr('x', function(d, j) {
+                            return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - rect_margin;
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 0)
+                        .style("stroke", "red")
+                        .style("fill", "red")
+                        .style("opacity", "0.3");
+
+                    // Outline
+                    focus.append("rect")
+                        .attr("class", "rect_outline")
+                        .attr("width", function(d, j) {
+                            return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                        })
+                        .attr('x', function(d, j) {
+                            return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - rect_margin;
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 1)
+                        .style("stroke", "red")
+                        .style("fill", "none")
+                        .style("opacity", "1");
+                }
+                // Highlight other loops in black
+                else {
+                    // Fill
+                    focus.append("rect")
+                        .attr("class", "rect")
+                        .attr("width", function(d, j) {
+                            return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                        })
+                        .attr('x', function(d, j) {
+                            return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - rect_margin;
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 0)
+                        .style("stroke", "black")
+                        .style("fill", "black")
+                        .style("opacity", "0.1");
+
+                    // Outline
+                    focus.append("rect")
+                        .attr("class", "rect_outline")
+                        .attr("width", function(d, j) {
+                            return +x(x_dist[end_index[i] - 1].dist) - x(x_dist[begin_index[i]].dist) + (+2 * rect_margin);
+                        })
+                        .attr("height", function() {
+                            return Math.abs(+y(max_signal[i]) - y(min_signal[i])) + (+2 * rect_margin);
+                        })
+                        .attr('x', function(d, j) {
+                            return +x(x_dist[begin_index[i]].dist) - rect_margin;
+                        })
+                        .attr("y", function(d, j) {
+                            return +y(max_signal[i]) - rect_margin;
+                        })
+                        .attr("clip-path", "url(#clip)")
+                        .style("stroke-width", 1)
+                        .style("stroke", "black")
+                        .style("fill", "none")
+                        .style("opacity", "1");
+                }
+            }
+        }
+
+        // Finds the max and min signal strength inside all loops.
+        function loop_max_min() {
+            // Reset variables
+            max_signal = [];
+            min_signal = [];
+
+            // Loop for each loop
+            for (var i = 0; i < begin_index.length; i++) {
+                // Set initial max/min
+                min_signal[i] = freq_data[begin_index[i]];
+                max_signal[i] = freq_data[begin_index[i]];
+                //
+                for (var j = begin_index[i]; j <= end_index[i]; j++) {
+                    // Smaller min signal found
+                    if (+freq_data[j] < +min_signal[i]) {
+                        min_signal[i] = freq_data[j];
+                    }
+                    // Larger max signal found
+                    if (+freq_data[j] > +max_signal[i]) {
+                        max_signal[i] = freq_data[j];
+                    }
+                }
+            }
+        }
+
+        // Check to see if inputted loop number with matching state (powered on / powered off) is found in new array (avg_power).
+        function check_loop(avg_power, loop_no, loop_status) {
+            //
+            var index = -1;
+
+            // Run through each element in NEW array
+            for (var i = 0; i < avg_power.length; i++) {
+                // Found a match
+                if (avg_power[i][0] == loop_no && avg_power[i][1] == loop_status) {
+                    index = i;
+                }
+            }
+
+            //
+            return index; // NOTE: index = -1 means not found
+        }
+
+        // Calculate the distance between two GPS coordinates
+        function cal_distance(last_lon, last_lat, lon, lat) {
+            //haversine formula
+            const earth_rad = 6371e3; //in metres
+            const deg_to_rad = Math.PI / 180;
+            var lat1 = last_lat * deg_to_rad
+            var lat2 = lat * deg_to_rad
+            var dlat = (lat - last_lat) * deg_to_rad;
+            var dlon = (lon - last_lon) * deg_to_rad;
+            var a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.sin(dlon / 2) * Math.sin(dlon / 2) * Math.cos(lat1) * Math.cos(lat2);
+            var c = 2 * Math.atan(Math.sqrt(a), Math.sqrt(1 - a));
+            var dist = earth_rad * c;
+            return dist;
+
+        }
+
+        // NOTE: this function is still in progress
+        // Finds crossovers from the signal strength data and calls function to display crossovers
+        // on interactive graph.
+        function find_crossover() {
+            for (var i = 0; i < begin_index.length; i++) {
+                var idx = begin_index[i];
+                //console.log(idx, ": ", end_index[i], ": ", lon, ": ", longitude[idx], ", ", lat, latitude[idx], ", ", elevation[idx]);
+                var last_lon = 0;
+                var last_lat = 0;
+                var sum = 0;
+                var lower = 22;
+                var upper = 28;
+                var start = 0;
+                var end = 0;
+                var bound = [];
+                for (var j = idx; j < end_index[i]; j++) {
+                    //longitude in decimal degrees
+                    var lon_raw = longitude[j].split(" ");
+                    var lon = (1 * lon_raw[0]) + (lon_raw[1] / 60);
+                    if (lon_raw[2] === "W") lon = -lon;
+                    //latitude in decimal degrees
+                    var lat_raw = latitude[j].split(" ");
+                    var lat = (1 * lat_raw[0]) + (lat_raw[1] / 60);
+                    if (lat_raw[2] === "S") lat = -lat;
+                    //if (j == idx) console.log(idx, lon, lat);
+
+                    if (j > begin_index[i]) {
+                        sum += cal_distance(last_lon, last_lat, lon, lat);
+
+                        //sum += dist;
+                        if (j < begin_index[i] + 100) {
+                            //console.log("last vs curr..", sum, dist, last_lon, lon, last_lat, lat)
+                            //console.log(dlat, dlon, lat1, lat2)
+                            //console.log(lower, sum, upper)
+                        }
+
+                        if (lower < sum && sum < upper) {
+                            if (start == 0) {
+                                start = j;
+                                //console.log(start)
+                            }
+                            end = j;
+                            //console.log(lower, sum, upper, start, end)
+                        }
+
+                        if (sum > upper) {
+                            if (start != 0) {
+                                bound.push(start);
+                                bound.push(end);
+                            }
+                            lower += 25;
+                            upper += 25;
+                            start = 0;
+                            end = 0;
+                        }
+                    } //if
+                    last_lon = lon;
+                    last_lat = lat;
+
+                } //for
+                sum = 0;
+                range_bound.push(bound);
+            } //for
+            draw_range();
+        }
+
+        // Draws all crossovers on interactive graph in analysis section. Crossovers are indicated as
+        // vertical lines who's x-value corresponds to the index of the data point of the crossover.
+        function draw_crossover() {
+            // Remove previous crossover lines
+            d3.selectAll("line.crossover").remove();
+
+            //
+            for (var i = 0; i < crossover_list.length; i++) {
+                // Fill
+                focus.append("line")
+                    .attr("class", "crossover")
+                    .attr('x1', function(d, j) {
+                        return x(crossover_list[i][0])
+                    })
+                    .attr("y1",
+                        function() {
+                            //
+                            var result;
+
+                            result = +Math.abs(y_max - height) * (height / y_range);
+
+                            //
+                            return result;
+                        })
+                    .attr('x2', function(d, j) {
+                        return x(crossover_list[i][0])
+                    })
+                    .attr("y2",
+                        function() {
+                            //
+                            var result;
+
+                            result = +Math.abs(y_max - crossover_list[i][1]) * (height / y_range);
+
+                            //
+                            return result;
+                        })
+                    .attr("clip-path", "url(#clip)");
+
+            }
+        }
+
+        // Draws the original and moving average signal strength data on the graph. Also draws all
+        // thresholds. Output depends on settings where different display settings may be checked.
+        function draw_data() {
+            //
+            if (graph_count >= 2) {
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_org.remove();
+                    graph_line2_org.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line.remove();
+                    graph_line2.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_s.remove();
+                    graph_line2_s.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_l.remove();
+                    graph_line2_l.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_s_l.remove();
+                    graph_line2_s_l.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_l_h.remove();
+                    graph_line2_l_h.remove();
+                } catch {
+
+                }
+                // Remove graph line (moving avg)
+                try {
+                    //
+                    graph_line_l_l.remove();
+                    graph_line2_l_l.remove();
+                } catch {
+
+                }
+
+                // Print original data simultaneously
+                if (true == document.getElementById("graph_o").checked) {
+                    graph_line_org = Line_chart.append("path")
+                        .datum(freq_data_original)
+                        .attr("class", "line_o")
+                        .attr("d", line);
+
+                    graph_line2_org = context.append("path")
+                        .datum(freq_data_original)
+                        .attr("class", "line_o")
+                        .attr("d", line2);
+                }
+                //
+                if (true == document.getElementById("graph_m").checked) {
+                    graph_line = Line_chart.append("path")
+                        .datum(x_dist)
+                        .attr("class", "line_m")
+                        .attr("d", line);
+
+                    graph_line2 = context.append("path")
+                        .datum(x_dist)
+                        .attr("class", "line_m")
+                        .attr("d", line2);
+                }
+                //
+                if (true == document.getElementById("graph_s").checked) {
+                    //
+                    if (true == document.getElementById("graph_s_c").checked) {
+                        // Draw center
+                        graph_line_s = Line_chart.append("path")
+                            .datum(freq_data_s)
+                            .attr("class", "line_s")
+                            .attr("d", line);
+
+                        graph_line2_s = context.append("path")
+                            .datum(freq_data_s)
+                            .attr("class", "line_s")
+                            .attr("d", line2);
+                    }
+
+                    //
+                    if (true == document.getElementById("graph_s_th").checked) {
+                        // Draw thresholds
+                        graph_line_s_l = Line_chart.append("path")
+                            .datum(crossover_l)
+                            .attr("class", "line_s_l")
+                            .attr("d", line);
+
+                        graph_line2_s_l = context.append("path")
+                            .datum(crossover_l)
+                            .attr("class", "line_s_l")
+                            .attr("d", line2);
+                    }
+                }
+                //
+                if (true == document.getElementById("graph_l").checked) {
+                    //
+                    if (true == document.getElementById("graph_l_c").checked) {
+                        // Draw center
+                        graph_line_l = Line_chart.append("path")
+                            .datum(freq_data_l)
+                            .attr("class", "line_l")
+                            .attr("d", line);
+
+                        graph_line2_l = context.append("path")
+                            .datum(freq_data_l)
+                            .attr("class", "line_l")
+                            .attr("d", line2);
+                    }
+
+                    //
+                    if (true == document.getElementById("graph_l_th").checked) {
+                        // Draw thresholds
+                        graph_line_l_h = Line_chart.append("path")
+                            .datum(lh_h)
+                            .attr("class", "line_l_h")
+                            .attr("d", line);
+
+                        graph_line2_l_h = context.append("path")
+                            .datum(lh_h)
+                            .attr("class", "line_l_h")
+                            .attr("d", line2);
+                        //
+                        graph_line_l_l = Line_chart.append("path")
+                            .datum(lh_l)
+                            .attr("class", "line_l_l")
+                            .attr("d", line);
+
+                        graph_line2_l_l = context.append("path")
+                            .datum(lh_l)
+                            .attr("class", "line_l_l")
+                            .attr("d", line2);
+                    }
+                }
+            }
+        }
+
+        // Draw absolute thresholds on interactive graph.
+        function draw_threshold() {
+            //
+            try {
+                line_upper.remove();
+                line_lower.remove();
+            } catch {
+
+            }
+
+            //
+            if (true == document.getElementById("abs_th").checked) {
+                line_upper = focus.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", max_height)
+                    .attr("x2", width)
+                    .attr("y2", max_height)
+                    .style("stroke-width", 1)
+                    .style("stroke", "green")
+                    .style("fill", "none");
+
+                line_lower = focus.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", min_height)
+                    .attr("x2", width)
+                    .attr("y2", min_height)
+                    .style("stroke-width", 1)
+                    .style("stroke", "green")
+                    .style("fill", "none");
+            }
+        }
+
+
+        //<input type="checkbox" id="show_settings" name="show_settings" value="Bike" onclick="display_settings()">
+        //<label for="show_settings"> Show Settings</label><br>
+
+        // NOTE: this function currently disables displaying the settings
+        // Function to display the settings menu in the analysis section.
+        function display_settings() {
+            //
+            <!-- if (true == document.getElementById("show_settings").checked) { -->
+            <!-- document.getElementById("container").style.display = "initial"; -->
+            <!-- } -->
+            <!-- else { -->
+            <!-- document.getElementById("container").style.display = "none"; -->
+            <!-- } -->
+
+            // Hide settings
+            document.getElementById("container").style.display = "none";
+        }
+
+        // Show upload section of webpage
+        function show_upload() {
+            // User requests to hide
+            if (document.getElementById("show_upload").innerHTML == "Hide") {
+                document.getElementById("upload_div").style.display = "none";
+                document.getElementById("show_upload").innerHTML = "Show";
+            }
+            // User requests to show
+            else if (document.getElementById("show_upload").innerHTML == "Show") {
+                document.getElementById("upload_div").style.display = "block";
+                document.getElementById("show_upload").innerHTML = "Hide";
+            }
+        }
+        // Show analysis section of webpage
+        function show_analysis() {
+            // User requests to hide
+            if (document.getElementById("show_analysis").innerHTML == "Hide") {
+                document.getElementById("analysis").style.display = "none";
+                //document.getElementById("container").style.display = "none"; // CC
+                document.getElementById("show_analysis").innerHTML = "Show";
+            }
+            // User requests to show
+            else if (document.getElementById("show_analysis").innerHTML == "Show") {
+                document.getElementById("analysis").style.display = "block";
+                //document.getElementById("container").style.display = "block"; // CC
+                document.getElementById("show_analysis").innerHTML = "Hide";
+            }
+        }
+        // Show report section of webpage
+        function show_report() {
+            // User requests to hide
+            if (document.getElementById("show_report").innerHTML == "Hide") {
+                document.getElementById("report").style.display = "none";
+                document.getElementById("show_report").innerHTML = "Show";
+            }
+            // User requests to show
+            else if (document.getElementById("show_report").innerHTML == "Show") {
+                document.getElementById("report").style.display = "block";
+                document.getElementById("show_report").innerHTML = "Hide";
+            }
+        }
+
+        // Show table in analysis section which shows CSV file data.
+        function show_table() {
+            //
+            if (document.getElementById("show_table").checked == true && document.getElementById("analysis").style.display != "none") {
+                document.getElementById("outer_graph").style.display = "block";
+            }
+            //
+            else {
+                document.getElementById("outer_graph").style.display = "none";
+            }
+        }
+
+        // Add file upload button to upload section. Allows user to upload another file.
+        function add_file() {
+            //
+            num_files += +1;
+
+            var space = document.createElement("br");
+            space.setAttribute("id", "fileUpload_space" + num_files)
+            document.getElementById("upload_buttons").appendChild(space);
+
+            var file = document.createElement("input");
+            file.setAttribute("type", "file");
+            file.setAttribute("id", "fileUpload" + num_files)
+            file.setAttribute("class", "fileUpload");
+            document.getElementById("upload_buttons").appendChild(file);
+        }
+
+        // Remove a file upload button. Allows user to upload one less file. Removes last button.
+        function remove_file() {
+            // Remove file upload button
+            var file = document.getElementById("fileUpload" + num_files);
+            d3.select(file).remove();
+
+            // Remove file upload button's spacing
+            var space = document.getElementById("fileUpload_space" + num_files);
+            d3.select(space).remove();
+
+            // Decrement the number of files
+            num_files -= 1;
+
+        }
+
+        // Restart the entire webpage
+        function restart() {
+            //
+            window.location.reload(true);
+        }
+
+        // Disable upload buttons - must 'clear all' to upload new files. Function ensures no invalid input can be made.
+        function disable_upload() {
+            // Disable files
+            var x = document.getElementsByClassName("fileUpload"); // Get all file buttons
+            for (var i = 0; i < x.length; i++) // Disable one file button at a time
+            {
+                x[i].disabled = true;
+            }
+            // Disable other upload buttons
+            document.getElementById("add_file").disabled = true;
+            document.getElementById("remove_file").disabled = true;
+            document.getElementById("upload").disabled = true;
+        }
+
+        // Disable analyze buttons - must 'clear all' to analyze again. Function ensures no invalid input can be made.
+        function disable_analyze() {
+            // Disable all buttons in analysis section
+            document.getElementById("input_loop_num").disabled = true;
+            document.getElementById("input_loop_submit").disabled = true;
+            document.getElementById("remove_loop").disabled = true;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<meta charset="utf-8">
+
+<head>
+<link rel="stylesheet" href="style.css" />
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="decodeparams.js"></script>
+
+</head>
+<body>
+    <p style="font-size: 30px"><b>DLU Log Decoder</b></p>
+    <p style="font-size: 20px"><b>Upload OMAP Extract</b></p>
+    <hr>
+    <div id="upload_div">
+        <br>
+        <div id="upload_buttons">
+            <button onclick="restart()">Clear All</button>
+            <br>
+            <button id="add_file" onclick="add_file()">Add File(s)</button>
+            <button id="remove_file" onclick="remove_file()">Remove File</button>
+        <br>
+	<div id="added_files">
+	    <p>2022.06.22.18h.800c10.txt</p>		
+	</div>
+        <br>
+        <input type="button" id="upload" value="Upload" onclick="Upload('none')" />
+        <p style="color:red; display:inline;">*</p>
+    </div>
+
+    <br>
+    <hr>
+    
+    <p style="font-size: 20px"><b>Select Parameters</b></p>
+	<div id="ATboxeas">
+		<label><input type="checkbox" id="ATP" />ATP</label>
+		<label><input type="checkbox" id="ATO" />ATO</label>
+	</div>
+	<div class="SelectorArea">
+		<div id="SelParameters">
+
+		</div>
+
+	</div>
+	</body>
+</html>

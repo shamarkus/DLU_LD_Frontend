@@ -1,0 +1,55 @@
+#container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+
+.line_m {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.0px;
+}
+
+.line_s {
+    fill: none;
+    stroke: brown;
+    stroke-width: 1.0px;
+}
+
+.line_s_l {
+    fill: none;
+    stroke: brown;
+    stroke-width: 1.0px;
+}
+
+.line_l {
+    fill: none;
+    stroke: green;
+    stroke-width: 1.0px;
+}
+
+.line_l_h {
+    fill: none;
+    stroke: green;
+    stroke-width: 1.0px;
+}
+
+.line_l_l {
+    fill: none;
+    stroke: green;
+    stroke-width: 1.0px;
+}
+
+.line_o {
+    fill: none;
+    stroke: tomato;
+    stroke-width: 1.0px;
+}
+
+.crossover {
+    fill: none;
+}
+#upload_buttons button {
+	margin-bottom : 15px;
+	margin-right : 5px;
+}
