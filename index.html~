@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<meta charset="utf-8">
+
+<head>
+<link rel="stylesheet" href="style.css" />
+<script src="decodeparams.js"></script>
+
+</head>
+<body>
+    <p style="font-size: 30px"><b>DLU Log Decoder</b></p>
+    <div class="SelectorArea">
+    <hr>
+    <h2>Upload OMAP Extract</h2>
+    <div id="upload_div">
+        <br>
+        <div id="upload_buttons">
+            <button onclick="restart()">Clear All</button>
+	    <br>
+            <button id="add_file" onclick="add_file()">Add File(s)</button>
+            <button id="remove_file" onclick="remove_file()" disabled>Remove File</button>
+            <br>
+            <div id="added_files">
+                <p>2022.06.22.18h.800c10.txt</p>		
+            </div>
+            <button id="upload" onclick="Upload('none')" style="margin-top:15px" disabled>Upload</button>
+            <p style="color:red; display:inline;">*</p>
+    </div>
+    <hr>
+    <h2>Parameters</h2>
+	<div id="ExternalFields">
+		<div id="ATboxes">
+			<h3 style="margin-left:0">Log Type</h3>
+			<select id="ATsel" onchange="callTables(this)" size=2>
+					<option value="0" title="ATO">ATO</option>
+					<option value="1" title="ATP">ATP</option>
+			</select>
+		</div>
+		<div id="StartTime">
+			<h3 style="margin-left:0">Start Time</h3>
+			<select id="start" onchange="setStartTime(this)" size="1">
+				<option title="Start of File(s)">Start Of File(s)</option>
+				<option title="2022/06/22 11:38:45">2022/06/22 11:28:45</option>
+			</select>
+		</div>
+		<div id="EndTime">
+			<h3 style="margin-left:0">End Time</h3>
+			<select id="end" onchange="setEndTimes(this)" size="1">
+				<option title="End of File(s)">End Of File(s)</option>
+				<option title="2022/06/22 11:38:45">2022/06/22 11:38:45</option>
+			</select>
+		</div>
+	</div>
+	<div id="ParameterFields">
+		<div id="selectParameters">
+			<h3>Parameters Available</h3>
+			<select id="sel" onchange="transferRows(this)" size="10">
+				<optgroup>
+					<option value="1" title="Train Speed">Train Speed</option>
+					<option value="2" title="Train Acceleration">Train Acceleration</option>
+				</optgroup>
+			</select>
+		</div>
+		<div id="chosenParameters">
+			<h3>Parameters To Be Analyzed</h3>
+			<select id="chosen" onchange="transferRows(this)" size="10">
+				<optgroup>
+					<option value="1" title="Train Speed">Train Speed</option>
+					<option value="2" title="Train Acceleration">Train Acceleration</option>
+				</optgroup>
+			</select>
+		</div>
+		<div id="presetParameters">
+			<h3>Parameter Presets</h3>
+			<select id="preset" onchange="transferRows(this)" size="10">
+				<optgroup>
+					<option value="1" title="Train Speed">Train Speed</option>
+					<option value="2" title="Train Acceleration">Train Acceleration</option>
+				</optgroup>
+			</select>
+		</div>
+	</div>
+	<div id="PresetInput">
+		<input type="text" id="inp" value="Enter Preset Name"/>
+		<br>
+		<input type="button" id="MakePreset" value="Make" onclick="setPreset()"/> 
+		<input type="button" id="RemovePreset" value="Remove" onclick="removePreset()" disabled/> 
+	</div>
+        <br><br><br>
+	<button id="analyze" onclick="Analyze('none')" disabled>Analyze</button>
+        <p style="color:red; display:inline;">*</p>
+	</div>
+	<hr>
+	<div id="Output">
+    		<h2>Output</h2>
+		<p>Filepath:</p>
+	</div>
+	<hr>
+	</body>
+</html>
