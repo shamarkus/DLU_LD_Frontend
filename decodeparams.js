@@ -1,3 +1,5 @@
+'use strict';
+
 function add_file() {
     //
     num_files += +1;
