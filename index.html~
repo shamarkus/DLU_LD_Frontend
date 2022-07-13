@@ -6,7 +6,8 @@
 <head>
 <link rel="stylesheet" href="style.css" />
 <script src="decodeparams.js"></script>
-
+<script src="NumToHeaderString_ATO.js"></script>
+<script src="NumToHeaderString_ATP.js"></script>
 </head>
 <body>
     <p style="font-size: 30px"><b>DLU Log Decoder</b></p>
@@ -34,20 +35,18 @@
 		<div id="ATboxes">
 			<h3 style="margin-left:0">Log Type</h3>
 			<select id="ATsel" onchange="callTables(this)" size=2>
-					<option value="0" title="ATO">ATO</option>
-					<option value="1" title="ATP">ATP</option>
+					<option value="0" title="ATO" style="text-align: center">ATO</option>
+					<option value="1" title="ATP" style="text-align: center">ATP</option>
 			</select>
 		</div>
 		<div id="StartTime">
 			<h3 style="margin-left:0">Start Time</h3>
-			<select id="start" onchange="setStartTime(this)" size="1">
-				<option title="SOF">SOF</option>
+			<select id="start" onchange="setEndTimes(this)" size="1">
 			</select>
 		</div>
 		<div id="EndTime">
 			<h3 style="margin-left:0">End Time</h3>
-			<select id="end" onchange="setEndTimes(this)" size="1">
-				<option title="EOF">EOF</option>
+			<select id="end" onchange="setStartTimes(this)" size="1">
 			</select>
 		</div>
 	</div>
@@ -55,18 +54,13 @@
 		<div id="selectParameters">
 			<h3>Parameters Available</h3>
 			<select id="sel" onchange="transferRows(this)" size="10">
-				<optgroup>
-					<option value="1" title="Train Speed">Train Speed</option>
-					<option value="2" title="Train Acceleration">Train Acceleration</option>
-				</optgroup>
 			</select>
+			<input type="text" class="inp"/>
 		</div>
 		<div id="chosenParameters">
 			<h3 style="color: rgba(255,0,0,1)">Parameters To Be Analyzed</h3>
 			<select id="chosen" onchange="transferRows(this)" size="10">
 				<optgroup>
-					<option value="1" title="Train Speed">Train Speed</option>
-					<option value="2" title="Train Acceleration">Train Acceleration</option>
 				</optgroup>
 			</select>
 		</div>
@@ -74,14 +68,12 @@
 			<h3>Parameter Presets</h3>
 			<select id="preset" onchange="transferRows(this)" size="10">
 				<optgroup>
-					<option value="1" title="Train Speed">Train Speed</option>
-					<option value="2" title="Train Acceleration">Train Acceleration</option>
 				</optgroup>
 			</select>
 		</div>
 	</div>
 	<div id="PresetInput" hidden>
-		<input type="text" id="inp" value="Enter Preset Name"/>
+		<input type="text" class="inp" value="Enter Preset Name"/>
 		<br>
 		<input type="button" id="MakePreset" value="Make" onclick="setPreset()"/> 
 		<input type="button" id="RemovePreset" value="Remove" onclick="removePreset()" disabled/> 

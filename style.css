@@ -160,7 +160,7 @@ option:hover{
 	margin: 10px 0 10px 0;
 	font-style: italic;
 }
-#inp {
+.inp {
 	margin: 20px 0 10px 10px; 
 	font-size: 18px;
 	width: 30%;
@@ -168,7 +168,11 @@ option:hover{
 	border-color: black;
 	border-width: 2px;
 }
-#inp:focus {
+.inp:focus {
 	border-color: blue;
+}
+#selectParameters input {
+	width: 100%;
+	margin-left:0;
 }
 
