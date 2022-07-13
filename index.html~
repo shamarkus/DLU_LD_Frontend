@@ -53,20 +53,20 @@
 	<div id="ParameterFields" hidden>
 		<div id="selectParameters">
 			<h3>Parameters Available</h3>
-			<select id="sel" onchange="transferRows(this)" size="10">
+			<select id="sel" onclick="transferRows(this,chosen)" size="10">
 			</select>
-			<input type="text" class="inp"/>
+			<input type="text" class="inp" id="paramInp" onKeyUp="showResults(this.value)" />
 		</div>
 		<div id="chosenParameters">
 			<h3 style="color: rgba(255,0,0,1)">Parameters To Be Analyzed</h3>
-			<select id="chosen" onchange="transferRows(this)" size="10">
+			<select id="chosen" onclick="transferRows(this,sel)" size="10">
 				<optgroup>
 				</optgroup>
 			</select>
 		</div>
 		<div id="presetParameters">
 			<h3>Parameter Presets</h3>
-			<select id="preset" onchange="transferRows(this)" size="10">
+			<select id="preset" size="10">
 				<optgroup>
 				</optgroup>
 			</select>
