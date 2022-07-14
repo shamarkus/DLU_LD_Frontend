@@ -1,12 +1,8 @@
-//https://stackoverflow.com/questions/16215771/how-to-open-select-file-dialog-via-js
-//
-//
-//
-//
 'use strict';
 const addedFiles = new Array();
 const times = new Array();
 const timesStringArr = new Array();
+const analyzeParams = new Array();
 
 // Restart the entire webpage
 function restart() {
@@ -143,7 +139,7 @@ function getTimeIntervals(myCallback){
             startTimes.push(`SOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
         }
         else{
-            startEndContainer.splice(startEndContainer.indexOf(times[i].index));
+            startEndContainer.splice(startEndContainer.indexOf(times[i].index),1);
             endTimes.push(`EOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
         }
     }
@@ -197,7 +193,7 @@ function setEndTimes(sel){
     }
 }
 
-function callTables(sel){
+function callTables(sel,clear){
     let content;
     if(!sel.selectedIndex){
         content = ATO;
@@ -205,15 +201,21 @@ function callTables(sel){
     else{
         content = ATP;
     }
-    
+    if(clear){
+        document.querySelector('#chosen').textContent='';
+        document.querySelector('#preset').textContent='';
+        analyzeParams.length = 0;
+    }
     let paramSel = document.querySelector('#sel');
     paramSel.textContent = '';
     let lines = content.split('\n');
     lines.forEach((line) => {
-        let opt = document.createElement('option');
-        opt.textContent = (line.split('\t'))[0];
-        opt.value = (line.split('\t'))[1];
-        paramSel.appendChild(opt);
+        if(!analyzeParams.includes(line)){
+            let opt = document.createElement('option');
+            opt.textContent = (line.split('\t'))[0];
+            opt.value = (line.split('\t'))[1];
+            paramSel.appendChild(opt);
+        }
     });
     Object.values(document.querySelector('#parameter_div').children).forEach(function(child){
         child.removeAttribute('hidden');
@@ -225,16 +227,18 @@ function showResults(val){
     let ATindex = document.querySelector('#ATsel').selectedIndex;
     res.textContent='';
     autocompleteMatch(val,ATindex).forEach(line => {
-        let opt = document.createElement('option');
-        opt.textContent = (line.split('\t'))[0];
-        opt.value = (line.split('\t'))[1];
-        res.appendChild(opt);
+            if(!analyzeParams.includes(line)){
+                let opt = document.createElement('option');
+                opt.textContent = (line.split('\t'))[0];
+                opt.value = (line.split('\t'))[1];
+                res.appendChild(opt);
+            }
     });
 }
 
 function autocompleteMatch(input,ATindex) {
     if (input == '') {
-        callTables(document.querySelector("#ATsel"));
+        callTables(document.querySelector("#ATsel"),false);
         return [];
     }
     let content;
@@ -254,5 +258,46 @@ function autocompleteMatch(input,ATindex) {
 }
 
 function transferRows(curSel,receiveSel){
-    receiveSel.appendChild(curSel.options[curSel.selectedIndex]);
+    let opt = curSel.options[curSel.selectedIndex];
+    let analyze = document.querySelector('#analyze');
+
+    if(receiveSel.id === "chosen"){
+        analyzeParams.push(`${opt.textContent}\t${opt.value}`);
+        analyze.disabled = false;
+    }
+    else{
+        analyzeParams.splice(analyzeParams.indexOf(`${opt.textContent}\t${opt.value}`,1));
+        if(!analyzeParams.length){
+            analyze.disabled = true;
+        }
+    }
+    receiveSel.insertChildAtIndex(opt);
+}
+
+Element.prototype.insertChildAtIndex = function(child) {
+    this.appendChild(child);
+    let indexToReplace = this.options.length;
+    let sortedOptions = Object.keys(this.options).sort((a,b) => {
+        if (Number(this.options[a].value) < Number(this.options[b].value)) {
+            indexToReplace = b;
+            return -1;    
+        }    
+        if (Number(this.options[b].value) < Number(this.options[a].value)) {
+            return 1;    
+        }    
+        return 0;    
+    });
+
+    if(indexToReplace != this.options.length){
+        for(let i = 0;i < sortedOptions.length-1; i++){
+            if((Number(sortedOptions[i])+1)-Number(sortedOptions[i+1]) > 0){
+                this.insertBefore(child,this.options[i]);
+                return;
+            }
+        }
+    }
+}
+
+function transferPresets(curSel,receiveSel){
+
 }

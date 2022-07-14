@@ -34,7 +34,7 @@
 	<div id="ExternalFields">
 		<div id="ATboxes">
 			<h3 style="margin-left:0">Log Type</h3>
-			<select id="ATsel" onchange="callTables(this)" size=2>
+			<select id="ATsel" onchange="callTables(this,true)" size=2>
 					<option value="0" title="ATO" style="text-align: center">ATO</option>
 					<option value="1" title="ATP" style="text-align: center">ATP</option>
 			</select>
@@ -60,15 +60,11 @@
 		<div id="chosenParameters">
 			<h3 style="color: rgba(255,0,0,1)">Parameters To Be Analyzed</h3>
 			<select id="chosen" onclick="transferRows(this,sel)" size="10">
-				<optgroup>
-				</optgroup>
 			</select>
 		</div>
 		<div id="presetParameters">
 			<h3>Parameter Presets</h3>
-			<select id="preset" size="10">
-				<optgroup>
-				</optgroup>
+			<select id="preset" onclick="transferPresets(this,chosen)" size="10">
 			</select>
 		</div>
 	</div>

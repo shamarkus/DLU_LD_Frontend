@@ -65,26 +65,21 @@ function Upload(b){
 
     //Read file to get time layouts
     getStartEndTimes();
-    //Convert to epoch --> Add to list
-    addToSelectTimeList();
     //Uncover Internal Parameters
     document.querySelector('#parameter_div').removeAttribute('hidden');
 }
 
 Date.prototype.addSeconds = function(seconds){
     let date = new Date(this.valueOf());
-    date.setDate(date.getDate() + seconds);
+    date.setSeconds(date.getSeconds() + seconds);
     return date;
 }
 
-function addToSelectTimeList(){
-    
-}
 function compare(a,b){
-    if (a<b) {
+    if (a.time<b.time) {
         return -1;
     }
-    if (b<a) {
+    if (b.time<a.time) {
         return 1;
     }
     return 0;
@@ -117,11 +112,147 @@ function getStartEndTimes(){
             startTime = new Date(startTime.slice(0,-4));
             endTime = new Date(endTime.slice(0,-4));
 
-            times.push(endTime);
-            times.push(startTime);
+            times.push({time: endTime, index: i});
+            times.push({time: startTime, index: i});
             timesStringArr.push({startTime: startTime,endTime: endTime,index: i});
-
         }
         times.sort(compare);
+        getTimeIntervals(addToSelectTimeList);
     });
+}
+
+function getTimeIntervals(myCallback){
+    let startEndContainer = new Array();
+    let startTimes = new Array();
+    let endTimes = new Array();
+    let curDate = times[0].time.addSeconds(60);
+
+    for(let i=0;i<times.length;i++){
+        if(i !== 0 && startEndContainer.length === 0 && ((times[i].time-times[i-1].time)/1000) > 1 ){
+            console.log("Consecutive files are not time-continuous!");
+            curDate = times[i].time.addSeconds(60);
+        }
+        while(curDate < times[i].time){
+            startTimes.push(`${curDate.yyyymmdd()}`);
+            endTimes.push(`${curDate.yyyymmdd()}`);
+            curDate = curDate.addSeconds(60);
+        }
+
+        if(!startEndContainer.includes(times[i].index)){
+            startEndContainer.push(times[i].index);
+            startTimes.push(`SOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
+        }
+        else{
+            startEndContainer.splice(startEndContainer.indexOf(times[i].index));
+            endTimes.push(`EOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
+        }
+    }
+    myCallback(startTimes,endTimes);
+}
+Date.prototype.yyyymmdd = function() {
+  let mm = this.getMonth() + 1; // getMonth() is zero-based
+  let dd = this.getDate();
+  return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${this.getHours()}:${this.getMinutes()}:${this.getSeconds()}`;
+};
+function addToSelectTimeList(startTimes,endTimes){
+    let selectStart = document.querySelector("#start");
+    let selectEnd = document.querySelector("#end");
+    //startTimes length == endTimes length
+    for(let i = 0;i<startTimes.length;i++){
+        let optS = document.createElement('option');
+        let optE = document.createElement('option');
+        optS.value = i;
+        optE.value = i;
+        optS.textContent = startTimes[i];
+        selectStart.appendChild(optS);
+        optE.textContent = endTimes[i];
+        selectEnd.appendChild(optE);
+    }
+    selectStart.value = 0;
+    selectEnd.value = selectEnd.length-1;
+}
+//sel is End Time Select
+function setStartTimes(sel){
+    let selectStart = document.querySelector("#start");
+    for(let i = 0;i<selectStart.length;i++){
+        if(i >= (sel.selectedIndex+1)){
+            selectStart.options[i].disabled = true;
+        }
+        else{
+            selectStart.options[i].disabled = false;
+        }
+    }
+}
+
+//sel is Start Time Select
+function setEndTimes(sel){
+    let selectEnd = document.querySelector("#end");
+    for(let i = 0;i<selectEnd.length;i++){
+        if(i >= (sel.selectedIndex)){
+            selectEnd.options[i].disabled = false;
+        }
+        else{
+            selectEnd.options[i].disabled = true;
+        }
+    }
+}
+
+function callTables(sel){
+    let content;
+    if(!sel.selectedIndex){
+        content = ATO;
+    }
+    else{
+        content = ATP;
+    }
+    
+    let paramSel = document.querySelector('#sel');
+    paramSel.textContent = '';
+    let lines = content.split('\n');
+    lines.forEach((line) => {
+        let opt = document.createElement('option');
+        opt.textContent = (line.split('\t'))[0];
+        opt.value = (line.split('\t'))[1];
+        paramSel.appendChild(opt);
+    });
+    Object.values(document.querySelector('#parameter_div').children).forEach(function(child){
+        child.removeAttribute('hidden');
+    });
+}
+
+function showResults(val){
+    let res = document.querySelector('#sel');
+    let ATindex = document.querySelector('#ATsel').selectedIndex;
+    res.textContent='';
+    autocompleteMatch(val,ATindex).forEach(line => {
+        let opt = document.createElement('option');
+        opt.textContent = (line.split('\t'))[0];
+        opt.value = (line.split('\t'))[1];
+        res.appendChild(opt);
+    });
+}
+
+function autocompleteMatch(input,ATindex) {
+    if (input == '') {
+        callTables(document.querySelector("#ATsel"));
+        return [];
+    }
+    let content;
+    if(!ATindex){
+        content = ATO.split('\n');
+    }
+    else{
+        content = ATP.split('\n');
+    }
+    
+    let reg = new RegExp(input);
+    return content.filter(function(term) {
+        if (term.match(reg)) {
+            return term;
+        }
+    });
+}
+
+function transferRows(curSel,receiveSel){
+    receiveSel.appendChild(curSel.options[curSel.selectedIndex]);
 }
