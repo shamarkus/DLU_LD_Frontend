@@ -2,7 +2,7 @@
 const addedFiles = new Array();
 const times = new Array();
 const timesStringArr = new Array();
-const analyzeParams = new Array();
+let analyzeParams = new Array();
 
 // Restart the entire webpage
 function restart() {
@@ -13,43 +13,42 @@ function restart() {
 //Handles unique files
 function add_file() {
     let input = document.createElement('input');
+    let addedFilesSel = document.querySelector('#addedFilenames');
     input.type = 'file';
     input.multiple = 'multiple';
     input.onchange = e => {
         for(let i=0;i<e.target.files.length;i++){
             if(addedFiles.filter(f => f.name === e.target.files[i].name).length === 0){
+                let opt = document.createElement('option');
                 addedFiles.push(e.target.files[i]);
+                opt.textContent = e.target.files[i].name;
+                addedFilesSel.appendChild(opt);
             }
         }
         document.querySelector('#remove_file').disabled = false;
         document.querySelector('#upload').disabled = false;
-        printAddedFiles();
     }
     input.click();
-}
-
-//Prints added Filenames based on addedFiles Array
-function printAddedFiles() {
-    let addedFilesText = document.querySelector('#added_files');
-    if(addedFiles.length){
-        addedFilesText.textContent = `${addedFiles[0].name}`;
-        for(let i=1;i<addedFiles.length;i++){
-            addedFilesText.textContent += `,`
-            addedFilesText.textContent += ` ${addedFiles[i].name}`;
-        }
-    }
-    else{
-        addedFilesText.textContent = '';
-        document.querySelector('#remove_file').disabled = true;
-        document.querySelector('#upload').disabled = true;
-    }
 }
 
 //Removes most recently added file
 //Toggles functionality of Remove_File Button
 function remove_file() {
-    addedFiles.pop();
-    printAddedFiles();
+    let selectedFile = document.querySelector('#addedFilenames');
+    if(selectedFile.selectedIndex !== -1){
+        let opt = selectedFile.children[selectedFile.selectedIndex];
+        addedFiles.splice(addedFiles.filter((obj,index) => {
+            if(obj.name === opt.textContent){
+                return index;
+            }
+        }),1);
+        selectedFile.removeChild(opt);
+    }
+    if(!addedFiles.length){
+        document.querySelector('#remove_file').disabled = true;
+        document.querySelector('#upload').disabled = true;
+        return;
+    }
 }
 
 //Uploads files for processing
@@ -57,6 +56,7 @@ function remove_file() {
 function Upload(b){
     document.querySelector('#add_file').disabled = true;
     document.querySelector('#remove_file').disabled = true;
+    document.querySelector('#addedFilenames').disabled = true;
     b.disabled = true;
 
     //Read file to get time layouts
@@ -104,10 +104,9 @@ function getStartEndTimes(){
             let lines = content[i].split('\n');
             let startTime = `${(lines[1].split('\t'))[0]} ${(lines[1].split('\t'))[1]}`;
             let endTime = `${(lines[lines.length-2].split('\t'))[0]} ${(lines[lines.length-2].split('\t'))[1]}`;
-
+            
             startTime = new Date(startTime.slice(0,-4));
             endTime = new Date(endTime.slice(0,-4));
-
             times.push({time: endTime, index: i});
             times.push({time: startTime, index: i});
             timesStringArr.push({startTime: startTime,endTime: endTime,index: i});
@@ -120,17 +119,22 @@ function getStartEndTimes(){
 function getTimeIntervals(myCallback){
     let startEndContainer = new Array();
     let startTimes = new Array();
-    let endTimes = new Array();
     let curDate = times[0].time.addSeconds(60);
 
     for(let i=0;i<times.length;i++){
-        if(i !== 0 && startEndContainer.length === 0 && ((times[i].time-times[i-1].time)/1000) > 1 ){
-            console.log("Consecutive files are not time-continuous!");
+        if(i !== 0 && startEndContainer.length === 0 ){
             curDate = times[i].time.addSeconds(60);
+            if (((times[i].time-times[i-1].time)/1000) > 1 ){
+                startTimes.push('NON TIME-CONTINUOUS INTERVAL');
+            }
+            else{
+                startTimes.push('CONTINUOUS TIME-INTERVAL');
+            }
         }
         while(curDate < times[i].time){
-            startTimes.push(`${curDate.yyyymmdd()}`);
-            endTimes.push(`${curDate.yyyymmdd()}`);
+            if(times.filter(e => e.time.getTime() === curDate.getTime()).length === 0){
+                startTimes.push(curDate.yyyymmdd());
+            }
             curDate = curDate.addSeconds(60);
         }
 
@@ -140,32 +144,44 @@ function getTimeIntervals(myCallback){
         }
         else{
             startEndContainer.splice(startEndContainer.indexOf(times[i].index),1);
-            endTimes.push(`EOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
+            startTimes.push(`EOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
         }
     }
-    myCallback(startTimes,endTimes);
+    myCallback(startTimes);
 }
 Date.prototype.yyyymmdd = function() {
   let mm = this.getMonth() + 1; // getMonth() is zero-based
   let dd = this.getDate();
   return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${this.getHours()}:${this.getMinutes()}:${this.getSeconds()}`;
 };
-function addToSelectTimeList(startTimes,endTimes){
+function addToSelectTimeList(startTimes){
     let selectStart = document.querySelector("#start");
     let selectEnd = document.querySelector("#end");
-    //startTimes length == endTimes length
     for(let i = 0;i<startTimes.length;i++){
-        let optS = document.createElement('option');
-        let optE = document.createElement('option');
-        optS.value = i;
-        optE.value = i;
-        optS.textContent = startTimes[i];
-        selectStart.appendChild(optS);
-        optE.textContent = endTimes[i];
-        selectEnd.appendChild(optE);
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = startTimes[i];
+        if(i !== startTimes.length-1){
+            selectStart.appendChild(opt);
+        }
+        if(startTimes[i-1] === 'CONTINUOUS TIME-INTERVAL'){
+            selectStart.removeChild(selectStart.children[i-1]);
+            selectStart.removeChild(selectStart.children[i-2]);
+            selectEnd.removeChild(selectEnd.children[i-2]);
+            continue;
+        }
+        else if(startTimes[i-1] ==='NON TIME-CONTINUOUS INTERVAL'){
+            selectStart.children[i-1].disabled = true;
+            selectEnd.children[i-2].disabled = true;
+            selectStart.removeChild(selectStart.children[i-2]);
+            continue;
+        }
+        if(i){
+            selectEnd.appendChild(opt.cloneNode(true));
+        }
     }
     selectStart.value = 0;
-    selectEnd.value = selectEnd.length-1;
+    selectEnd.value = selectEnd.options[selectEnd.options.length-1].value;
 }
 //sel is End Time Select
 function setStartTimes(sel){
@@ -174,8 +190,8 @@ function setStartTimes(sel){
         if(i >= (sel.selectedIndex+1)){
             selectStart.options[i].disabled = true;
         }
-        else{
-            selectStart.options[i].disabled = false;
+        else {
+            selectStart.options[i].textContent !=='NON TIME-CONTINUOUS INTERVAL' ? selectStart.options[i].disabled = false : 1;
         }
     }
 }
@@ -185,7 +201,7 @@ function setEndTimes(sel){
     let selectEnd = document.querySelector("#end");
     for(let i = 0;i<selectEnd.length;i++){
         if(i >= (sel.selectedIndex)){
-            selectEnd.options[i].disabled = false;
+            selectEnd.options[i].textContent !=='NON TIME-CONTINUOUS INTERVAL' ? selectEnd.options[i].disabled = false : 1;
         }
         else{
             selectEnd.options[i].disabled = true;
@@ -202,9 +218,20 @@ function callTables(sel,clear){
         content = ATP;
     }
     if(clear){
+        let presetSel = document.querySelector('#preset');
         document.querySelector('#chosen').textContent='';
-        document.querySelector('#preset').textContent='';
+        presetSel.textContent ='';
         analyzeParams.length = 0;
+
+        let key = 0;
+        for(let keynum = 0; key = window.localStorage.key(keynum); keynum++){
+            let opt = document.createElement('option');
+            opt.textContent = key;
+            presetSel.appendChild(opt);
+        }
+        if(presetSel.children.length != 0){
+            document.querySelector('#RemovePreset').disabled = false;
+        }
     }
     let paramSel = document.querySelector('#sel');
     paramSel.textContent = '';
@@ -271,7 +298,13 @@ function transferRows(curSel,receiveSel){
             analyze.disabled = true;
         }
     }
-    receiveSel.insertChildAtIndex(opt);
+    let paramInputValue = document.querySelector('#paramInp').value;
+    if(paramInputValue==="Enter Parameter Name" || opt.textContent.match(paramInputValue)){
+        receiveSel.insertChildAtIndex(opt);
+    }
+    else{
+        curSel.removeChild(opt);
+    }
 }
 
 Element.prototype.insertChildAtIndex = function(child) {
@@ -298,6 +331,46 @@ Element.prototype.insertChildAtIndex = function(child) {
     }
 }
 
-function transferPresets(curSel,receiveSel){
+function transferPresets(presetSel,chosenSel,paramSel){
+    let chosenPreset = presetSel.children[presetSel.selectedIndex];
+    let presetParams = window.localStorage.getItem(chosenPreset.textContent);
+    for(let opt of Object.values(chosenSel.options)){
+        console.log(opt);
+        paramSel.insertChildAtIndex(opt); 
+    }
+    analyzeParams = presetParams;
+    for(const str of presetParams){
+        let opt = document.querySelector('option');
+        opt.textContent = presetParams.split('\t')[0];
+        chosenSel.appendChild(opt);
+    }
+}
 
+function setPreset(removeButton,presetSel,val){
+    window.localStorage.setItem(val,[...analyzeParams]);
+    if(Object.values(presetSel.children).filter(child => child.textContent === val).length === 0){
+        let opt = document.createElement('option');
+        opt.textContent = val;
+        presetSel.appendChild(opt);
+        
+        if(presetSel.children.length == 0){
+            removeButton.disabled = true;
+        }
+        else{
+            removeButton.disabled = false;
+        }
+    }
+}
+
+function removePreset(removeButton,presetSel,val){
+    window.localStorage.removeItem(val);
+    presetSel.removeChild(Object.values(presetSel.children).filter(child => {
+        if(child.textContent === val){
+            return child;
+        }
+    })[0]);
+
+    if(presetSel.children.length == 0){
+        removeButton.disabled = true;
+    }
 }
