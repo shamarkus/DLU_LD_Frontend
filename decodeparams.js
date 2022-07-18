@@ -13,16 +13,28 @@ function restart() {
 //Handles unique files
 function add_file() {
     let input = document.createElement('input');
+    let buttonsDiv = document.querySelector('#upload_buttons');
     let addedFilesSel = document.querySelector('#addedFilenames');
     input.type = 'file';
     input.multiple = 'multiple';
     input.onchange = e => {
+        while(buttonsDiv.children.length > 8){
+            buttonsDiv.removeChild(buttonsDiv.children[4]);
+        }
+        let dupText = document.createElement('p');
+        dupText.style = 'color:red; display:inline;';
+        dupText.textContent = `Error: Failed To Upload File - Conflicting File Names `;
         for(let i=0;i<e.target.files.length;i++){
-            if(addedFiles.filter(f => f.name === e.target.files[i].name).length === 0){
+            const dups = addedFiles.filter(f => f.name === e.target.files[i].name);
+            if(dups.length === 0){
                 let opt = document.createElement('option');
                 addedFiles.push(e.target.files[i]);
                 opt.textContent = e.target.files[i].name;
                 addedFilesSel.appendChild(opt);
+            }
+            else{
+                dupText.textContent = `${dupText.textContent} --- ${dups[0].name}`;
+                buttonsDiv.insertBefore(dupText,buttonsDiv.children[4]);
             }
         }
         document.querySelector('#remove_file').disabled = false;
@@ -37,11 +49,7 @@ function remove_file() {
     let selectedFile = document.querySelector('#addedFilenames');
     if(selectedFile.selectedIndex !== -1){
         let opt = selectedFile.children[selectedFile.selectedIndex];
-        addedFiles.splice(addedFiles.filter((obj,index) => {
-            if(obj.name === opt.textContent){
-                return index;
-            }
-        }),1);
+        addedFiles.splice(selectedFile.selectedIndex,1);
         selectedFile.removeChild(opt);
     }
     if(!addedFiles.length){
@@ -209,6 +217,7 @@ function setEndTimes(sel){
     }
 }
 
+//Initializes all tables with the corresponding parameters
 function callTables(sel,clear){
     let content;
     if(!sel.selectedIndex){
@@ -225,9 +234,11 @@ function callTables(sel,clear){
 
         let key = 0;
         for(let keynum = 0; key = window.localStorage.key(keynum); keynum++){
-            let opt = document.createElement('option');
-            opt.textContent = key;
-            presetSel.appendChild(opt);
+            if(key.slice(-1) == sel.selectedIndex){
+                let opt = document.createElement('option');
+                opt.textContent = key.slice(0,-1);
+                presetSel.appendChild(opt);
+            }
         }
         if(presetSel.children.length != 0){
             document.querySelector('#RemovePreset').disabled = false;
@@ -249,6 +260,8 @@ function callTables(sel,clear){
     });
 }
 
+//Obtains parameter name & matches all corresponding parameters
+//Parameter name is compatible with RegEx Expression Matching
 function showResults(val){
     let res = document.querySelector('#sel');
     let ATindex = document.querySelector('#ATsel').selectedIndex;
@@ -284,16 +297,28 @@ function autocompleteMatch(input,ATindex) {
     });
 }
 
+//Transfer child element from curSel to receiveSel
 function transferRows(curSel,receiveSel){
     let opt = curSel.options[curSel.selectedIndex];
     let analyze = document.querySelector('#analyze');
 
     if(receiveSel.id === "chosen"){
         analyzeParams.push(`${opt.textContent}\t${opt.value}`);
+        analyzeParams.sort((a,b) => {
+            let aVal = Number(a.split('\t')[1]);
+            let bVal = Number(b.split('\t')[1]);
+            if(aVal < bVal){
+                return -1;
+            }
+            if(aVal > bVal){
+                return 1;
+            }
+            return 0;
+        })
         analyze.disabled = false;
     }
     else{
-        analyzeParams.splice(analyzeParams.indexOf(`${opt.textContent}\t${opt.value}`,1));
+        analyzeParams.splice(curSel.selectedIndex,1);
         if(!analyzeParams.length){
             analyze.disabled = true;
         }
@@ -331,46 +356,65 @@ Element.prototype.insertChildAtIndex = function(child) {
     }
 }
 
+//BASIC:
+//Creation of Unique Presets
+//Removal of Current Analysis To Correct Place
+//ADVANCED:
+//Full Overwriting 
+//Append to current
+//Duplicate from current and append
+//Conflicting names between Log Types -- fix : add logtype to end of name so unique to type always
+//Ask whether rename is necessary
 function transferPresets(presetSel,chosenSel,paramSel){
+    if(document.querySelector("#paramInp").value !== 'Enter Parameter Name'){
+        callTables(document.querySelector("#ATsel"),false);
+        document.querySelector("#paramInp").value = 'Enter Parameter Name';
+    }
+
+    let logType = document.querySelector("#ATsel").selectedIndex;
     let chosenPreset = presetSel.children[presetSel.selectedIndex];
-    let presetParams = window.localStorage.getItem(chosenPreset.textContent);
+    let presetParams = JSON.parse(window.localStorage.getItem(chosenPreset.textContent+logType)).params;
     for(let opt of Object.values(chosenSel.options)){
-        console.log(opt);
         paramSel.insertChildAtIndex(opt); 
     }
     analyzeParams = presetParams;
-    for(const str of presetParams){
-        let opt = document.querySelector('option');
-        opt.textContent = presetParams.split('\t')[0];
-        chosenSel.appendChild(opt);
+    for(let i = presetParams.length-1;i>-1;i--){
+        let index = (presetParams[i].split('\t')[1])-1;
+        let tempOpt = paramSel.children[index];
+        chosenSel.insertChildAtIndex(tempOpt);
     }
 }
 
 function setPreset(removeButton,presetSel,val){
-    window.localStorage.setItem(val,[...analyzeParams]);
+    let logType = document.querySelector("#ATsel").selectedIndex;
+    window.localStorage.setItem(val+logType,JSON.stringify({logType: logType, params:[...analyzeParams]}));
     if(Object.values(presetSel.children).filter(child => child.textContent === val).length === 0){
         let opt = document.createElement('option');
         opt.textContent = val;
         presetSel.appendChild(opt);
         
-        if(presetSel.children.length == 0){
-            removeButton.disabled = true;
-        }
-        else{
+        if(presetSel.children.length !== 0){
             removeButton.disabled = false;
         }
     }
 }
 
 function removePreset(removeButton,presetSel,val){
-    window.localStorage.removeItem(val);
+    let logType = document.querySelector("#ATsel").selectedIndex;
+    window.localStorage.removeItem(val+logType);
     presetSel.removeChild(Object.values(presetSel.children).filter(child => {
         if(child.textContent === val){
             return child;
         }
     })[0]);
 
-    if(presetSel.children.length == 0){
+    if(presetSel.children.length === 0){
         removeButton.disabled = true;
     }
+}
+
+function analyze(analyzeButton){
+    console.log("reached");
+    analyzeButton.disabled = true;
+    //figure out how to reach the C executable
 }
