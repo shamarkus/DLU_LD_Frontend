@@ -160,7 +160,10 @@ function getTimeIntervals(myCallback){
 Date.prototype.yyyymmdd = function() {
   let mm = this.getMonth() + 1; // getMonth() is zero-based
   let dd = this.getDate();
-  return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${this.getHours()}:${this.getMinutes()}:${this.getSeconds()}`;
+  let hh = this.getHours();
+  let MM = this.getMinutes();
+  let SS = this.getSeconds();
+  return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${(hh>9 ? '' : '0')+hh}:${(MM>9 ? '' : '0')+MM}:${(SS>9 ? '' : '0')+SS}`;
 };
 function addToSelectTimeList(startTimes){
     let selectStart = document.querySelector("#start");
