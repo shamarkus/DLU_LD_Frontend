@@ -34,8 +34,8 @@ struct Parameters {
 	time_t startTime;
 	time_t endTime;
 	int numOfArgs;
-	char Args[MAX_COLUMN_SIZE][MAX_STRING_SIZE];
 	char** argv;
+	char Args[MAX_COLUMN_SIZE][MAX_STRING_SIZE];
 	char initFilename[MAX_STRING_SIZE];
 };
 

@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include <windows.h>
 
 #define ATP_DEF "ATP"
 #define ATO_DEF "ATO"

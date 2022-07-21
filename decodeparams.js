@@ -41,6 +41,7 @@ function add_file() {
         document.querySelector('#upload').disabled = false;
     }
     input.click();
+    input.remove();
 }
 
 //Removes most recently added file
@@ -113,10 +114,10 @@ function getStartEndTimes(){
             let startTime = `${(lines[1].split('\t'))[0]} ${(lines[1].split('\t'))[1]}`;
             let endTime = `${(lines[lines.length-2].split('\t'))[0]} ${(lines[lines.length-2].split('\t'))[1]}`;
             
-            startTime = new Date(startTime.slice(0,-4));
-            endTime = new Date(endTime.slice(0,-4));
-            times.push({time: endTime, index: i});
+            startTime = new Date(startTime.slice(0,-4)+' UTC');
+            endTime = new Date(endTime.slice(0,-4)+' UTC');
             times.push({time: startTime, index: i});
+            times.push({time: endTime, index: i});
             timesStringArr.push({startTime: startTime,endTime: endTime,index: i});
         }
         times.sort(compare);
@@ -246,6 +247,7 @@ function callTables(sel,clear){
         if(presetSel.children.length != 0){
             document.querySelector('#RemovePreset').disabled = false;
         }
+	document.querySelector('#paramInp').value = 'Enter Parameter Name';
     }
     let paramSel = document.querySelector('#sel');
     paramSel.textContent = '';
@@ -419,5 +421,31 @@ function removePreset(removeButton,presetSel,val){
 function analyze(analyzeButton){
     console.log("reached");
     analyzeButton.disabled = true;
-    //figure out how to reach the C executable
+
+    let blob = new Blob([makeConfig()], {type: "text/plain"});
+    let dlink = document.createElement('a');
+    dlink.download = "config.cmd";
+    dlink.href = window.URL.createObjectURL(blob);
+    dlink.onclick = function(e){
+        console.log(e,this);
+        let that = this;
+        setTimeout(function(){
+            window.URL.revokeObjectURL(blob);
+        }, 1500);
+    }
+    dlink.click();
+    dlink.remove();
+}
+
+function makeConfig(){
+    let selectStart = document.querySelector("#start");
+    let selectEnd = document.querySelector("#end");
+    let contents = `set logType=\"${document.querySelector('#ATsel').selectedIndex}\"\nset files=\"`;
+    for(const index of new Set(times.map(time => time.index))){
+        contents = contents.concat(addedFiles[index].name).concat('\t');
+    }
+    contents = contents.slice(0,-1).concat('\"\n');
+    contents = contents.concat(`set times=\"${selectStart.children[selectStart.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\t${selectEnd.children[selectEnd.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\"\n`);
+    contents = contents.concat(`set params=\"${analyzeParams.map(str => str.split('\t')[1]).join("\t")}\"\n`);
+    return contents;
 }
