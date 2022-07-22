@@ -451,7 +451,11 @@ function makeConfig(){
     let selectEnd = document.querySelector("#end");
     let contents = `set logType=\"${document.querySelector('#ATsel').selectedIndex}\"\nset files=\"`;
     for(const index of new Set(times.map(time => time.index))){
-        contents = contents.concat(addedFiles[index].name).concat('\t');
+        contents = contents
+        .concat(addedFiles[index].name)
+        .concat('\t')
+        .concat(Object.values(document.querySelector('#addedFilenames').children).find(child => child.textContent === addedFiles[index].name) ? "1" : "2")
+        .concat('\t');
     }
     contents = contents.slice(0,-1).concat('\"\n');
     contents = contents.concat(`set times=\"${selectStart.children[selectStart.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\t${selectEnd.children[selectEnd.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\"\n`);
