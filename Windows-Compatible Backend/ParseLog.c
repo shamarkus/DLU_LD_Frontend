@@ -188,6 +188,28 @@ void parseLogFile(struct Parameters* inputParams){
 	
 		writeChangingRecords(fileInput, fileOutput, inputParams);
 		fclose(fileInput);
-		fclose(fileOutput);
 	}
+}
+
+bool checkMultCores(struct Parameters* inputParams){
+	for(int i = 1; i < inputParams.fileC; i++){
+		if(inputParams->fileArray[i].core != inputParams->fileArray[i-1].core){
+			return true;
+		}
+	}
+	return false;
+}
+
+void writeConcatHeader(FILE* outputFile, bool multCores){
+
+}
+
+void concatLogFiles(struct Parameters* inputParams){
+	//Ask Richard about concatenated output filename
+	char outputFileName[MAX_STRING_SIZE];
+	sprintf(outputFileName,"%s%s.%s",inputParams->dirPath,"ConcatenatedOutput",CSV_SUFFIX);
+	FILE* outputFile = fopen(outputFileName,"w");
+
+	writeConcatHeader(outputFile,checkMultCores(inputParams));
+
 }

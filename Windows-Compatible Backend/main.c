@@ -256,14 +256,14 @@ bool checkOutputFilenames(struct Parameters* inputParams){
 		sprintf(outputFileName,"%s%s.%s",inputParams->dirPath,inputParams->fileArray[i].fileName,CSV_SUFFIX);
 		if (access(outputFileName, F_OK) != 0) {
 		    // file doesnt exist
-		    inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w");
+		    inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w+");
 		    continue;
 		}
 		for(int fileCounter=1;fileCounter<100;fileCounter++){
 			sprintf(outputFileName,"%s%s-%02d.%s",inputParams->dirPath,inputParams->fileArray[i].fileName,fileCounter,CSV_SUFFIX);
 			if (access(outputFileName, F_OK) != 0) {
 			    // file doesnt exist
-				inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w");
+				inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w+");
 				break;
 			}
 			else if(fileCounter == 99){
@@ -286,6 +286,8 @@ int main(int argc,char** argv){
 	if(!checkOutputFilenames(inputParams)) return 0;
 
 	parseLogFile(inputParams);
+
+	if(inputParams->fileC > 1) concatLogFiles(inputParams);
 
 	free(inputParams);
 

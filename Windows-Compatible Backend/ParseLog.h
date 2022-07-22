@@ -67,8 +67,6 @@ struct recordInfo {
 	char logArgs[MAX_COLUMN_SIZE][MAX_STRING_SIZE];
 };
 
-
-
 bool changeInRecords(struct recordInfo* prevRecord,struct recordInfo* curRecord);
 
 char* convertEpochToString(struct recordInfo* curRecord,char UTCTimestamp[],int UTC);
@@ -81,10 +79,16 @@ int updateSecondFraction(struct recordInfo* curRecord,int numInitFiles,int AT_DE
 
 void tokenizeLine(struct Parameters* inputParams,struct recordInfo* curRecord);
 
-void parseLogFile(struct Parameters* inputParams);
-
 void writeHeaderLine(FILE* fileOutput,struct Parameters* inputParams);			
 
 void writeChangingRecords(FILE* fileInput,FILE* fileOutput,struct Parameters* inputParams);
+
+void parseLogFile(struct Parameters* inputParams);
+
+bool checkMultCores(struct Parameters* inputParams);
+
+void writeConcatHeader(FILE* outputFile, bool multCores);
+
+void concatLogFiles(struct Parameters* inputParams);
 
 #endif
