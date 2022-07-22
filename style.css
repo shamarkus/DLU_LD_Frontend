@@ -123,7 +123,7 @@ hr {
 #addedFiles {
 	width: 25%;
 }
- #selectParameters, #chosenParameters, #presetParameters {
+ #addedFiles, #addedFiles2, #selectParameters, #chosenParameters, #presetParameters {
 	float: left;
 	width: 31%;
 	margin-left: 10px;

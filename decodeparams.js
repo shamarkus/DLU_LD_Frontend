@@ -19,7 +19,8 @@ function add_file() {
     input.multiple = 'multiple';
     input.onchange = e => {
         while(buttonsDiv.children.length > 8){
-            buttonsDiv.removeChild(buttonsDiv.children[4]);
+            buttonsDiv.removeChild(buttonsDiv.children[7]);
+            //buttonsDiv.children[3].style = 'margin-right:0;';
         }
         let dupText = document.createElement('p');
         dupText.style = 'color:red; display:inline;';
@@ -34,7 +35,8 @@ function add_file() {
             }
             else{
                 dupText.textContent = `${dupText.textContent} --- ${dups[0].name}`;
-                buttonsDiv.insertBefore(dupText,buttonsDiv.children[4]);
+                //buttonsDiv.children[2].style = 'margin-right:0;';
+                buttonsDiv.insertBefore(dupText,buttonsDiv.children[7]);
             }
         }
         document.querySelector('#remove_file').disabled = false;
@@ -47,10 +49,10 @@ function add_file() {
 //Removes most recently added file
 //Toggles functionality of Remove_File Button
 function remove_file() {
-    let selectedFile = document.querySelector('#addedFilenames');
+    let selectedFile = (document.querySelector('#addedFilenames').selectedIndex === -1) ? document.querySelector('#addedFilenames2') : document.querySelector('#addedFilenames');
     if(selectedFile.selectedIndex !== -1){
         let opt = selectedFile.children[selectedFile.selectedIndex];
-        addedFiles.splice(selectedFile.selectedIndex,1);
+        addedFiles.splice(addedFiles.indexOf(opt.textContent),1);
         selectedFile.removeChild(opt);
     }
     if(!addedFiles.length){
@@ -58,6 +60,13 @@ function remove_file() {
         document.querySelector('#upload').disabled = true;
         return;
     }
+}
+
+function dragToSel(transferSel,curSel){
+        if(transferSel.selectedIndex === -1 && curSel.selectedIndex !== -1){
+            transferSel.appendChild(curSel.children[curSel.selectedIndex]);
+            transferSel.selectedIndex = -1;
+        }
 }
 
 //Uploads files for processing
