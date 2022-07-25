@@ -85,8 +85,9 @@
 	</div>
 	<div id="Analyze" hidden>
         <br><br><br>
-	<button id="analyze" onclick="analyze(this)" disabled>Analyze</button>
+		<button id="analyze" onclick="analyze(this)" disabled>Analyze</button>
         <p style="color:red; display:inline;">*</p>
+		<input type="text" class="inp" id="outputNameInp" value="Enter Filename for Output [OPTIONAL]" onfocus="if(this.value == 'Enter Filename for Output [OPTIONAL]'){this.value = '';}" onblur="if(this.value == ''){this.value='Enter Filename for Output [OPTIONAL]';}" />
 	</div>
    </div>
    <hr>

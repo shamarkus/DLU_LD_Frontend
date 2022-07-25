@@ -460,5 +460,6 @@ function makeConfig(){
     contents = contents.slice(0,-1).concat('\"\n');
     contents = contents.concat(`set times=\"${selectStart.children[selectStart.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\t${selectEnd.children[selectEnd.selectedIndex].textContent.slice(-19).replace(/-/g,'/')}\"\n`);
     contents = contents.concat(`set params=\"${analyzeParams.map(str => str.split('\t')[1]).join("\t")}\"\n`);
+    contents = contents.concat(`set outputName=\"${ document.querySelector("#outputNameInp").value === 'Enter Filename for Output [OPTIONAL]' ? "" : document.querySelector("#outputNameInp").value }\"\n`)
     return contents;
 }
