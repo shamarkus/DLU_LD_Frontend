@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jul 21 11:07:42 2022
+# Make data base, printed on Tue Jul 26 09:16:03 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ WSLENV = ELECTRON_RUN_AS_NODE/w:
 # automatic
 @F = $(notdir $@)
 # makefile
-CURDIR := /mnt/c/Users/marky/Desktop/DLU
+CURDIR := /home/shamarkus/DLU/DLULogDecoder/Windows_Compatible_Backend
 # makefile
 SHELL = /bin/sh
 # environment
@@ -51,7 +51,7 @@ PATH = /home/shamarkus/.vscode-server/bin/3b889b090b5ad5793f524b5d1d39fda662b96a
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # environment
-VSCODE_IPC_HOOK_CLI = /tmp/vscode-ipc-f62954ca-df2a-4362-94d8-7ce7c10afd74.sock
+VSCODE_IPC_HOOK_CLI = /tmp/vscode-ipc-692417f4-fbe4-4b13-8b1f-94e19898a2f4.sock
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
 # environment
@@ -61,7 +61,7 @@ LS_COLORS = rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:
 # environment
 DISPLAY = :0.0
 # environment
-PWD = /mnt/c/Users/marky/Desktop/DLU
+PWD = /home/shamarkus/DLU/DLULogDecoder/Windows_Compatible_Backend
 # default
 .LOADED := 
 # environment
@@ -153,9 +153,9 @@ MOTD_SHOWN = update-motd
 
 # Directories
 
-# . (device 46, inode 48413695994364472): 18 files, no impossibilities.
+# . (device 2064, inode 9282): 19 files, no impossibilities.
 
-# 18 files, no impossibilities in 1 directories.
+# 19 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -200,7 +200,7 @@ all:
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-07-05 10:51:40.438825
+#  Last modified 2022-07-26 08:44:06.0776921
 #  File has been updated.
 #  Successfully updated.
 
@@ -218,12 +218,12 @@ makefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 23 / storage = 306 B / avg = 13 B
-# current buf: size = 8162 B / used = 306 B / count = 23 / avg = 13 B
+# strcache buffers: 1 (0) / strings = 24 / storage = 309 B / avg = 12 B
+# current buf: size = 8162 B / used = 309 B / count = 24 / avg = 12 B
 
-# strcache performance: lookups = 30 / hit rate = 23%
+# strcache performance: lookups = 31 / hit rate = 22%
 # hash-table stats:
-# Load=23/8192=0%, Rehash=0, Collisions=1/30=3%
-# Finished Make data base on Thu Jul 21 11:07:42 2022
+# Load=24/8192=0%, Rehash=0, Collisions=1/31=3%
+# Finished Make data base on Tue Jul 26 09:16:03 2022
 
  

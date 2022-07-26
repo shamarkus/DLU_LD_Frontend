@@ -1,5 +1,5 @@
 make --dry-run --always-make --keep-going --print-directory
-make: Entering directory '/mnt/c/Users/marky/Desktop/DLU'
+make: Entering directory '/home/shamarkus/DLU/DLULogDecoder/Windows_Compatible_Backend'
 gcc -g main.c ParseLog.c -o DLULogProcessor
-make: Leaving directory '/mnt/c/Users/marky/Desktop/DLU'
+make: Leaving directory '/home/shamarkus/DLU/DLULogDecoder/Windows_Compatible_Backend'
  

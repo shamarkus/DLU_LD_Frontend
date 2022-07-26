@@ -359,7 +359,7 @@ int checkMultCores(struct Parameters* inputParams){
 	for(int i = 1; i < inputParams->fileC; i++){
 		if(inputParams->fileArray[i].core != inputParams->fileArray[i-1].core)
 		{
-			return CORE_MULT;
+			return 0;
 		}
 		else
 		{
@@ -408,7 +408,7 @@ void concatFiles(FILE* outputFile, struct Parameters* inputParams){
 				lineCount++;
 				continue;
 			}
-			else if( 1 == lineCount )
+			else if(lineCount == 1)
 			{
 				fprintf(outputFile,"%s,",strcat(inputParams->fileArray[i].fileName,TXT_SUFFIX));
 			}	
@@ -418,7 +418,7 @@ void concatFiles(FILE* outputFile, struct Parameters* inputParams){
 			}
 
 			//Dealing with multiple cores + file is part of core 2 -> spacing must be adjusted with commas
-			if(!inputParams->multCores && (CORE_TWO == inputParams->fileArray[i].core))
+			if(!inputParams->multCores && (inputParams->fileArray[i].core == CORE_TWO))
 			{
 				//Print the timestamp -- the first 21 chars
 				fprintf(outputFile,"%.21s",line);

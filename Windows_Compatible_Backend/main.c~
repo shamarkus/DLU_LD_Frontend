@@ -31,25 +31,26 @@ char* strtok_r (char *s, const char *delim, char **save_ptr);
 //POSIX systems have strtok_r -- Windows systems do not
 char* strtok_r (char *s, const char *delim, char **save_ptr){
 	char *end;
-	if ( NULL == s )
+0f(<right>y"byt=<left>%"cyT=0f(<right>dt="cPa <Esc>0f(%<left>ddT=x"cPu"bPF=a  
+	if (s == NULL)
 	{
 		s = *save_ptr;
 	}
-	if ( '\0' == *s )
+	if (*s == '\0')
 	{
 		*save_ptr = s;
 		return NULL;
 	}
 	/* Scan leading delimiters.  */
 	s += strspn (s, delim);
-	if ( '\0' == *s )
+	if (*s == '\0')
 	{
 		*save_ptr = s;
 		return NULL;
 	}
 	/* Find the end of the token.  */
 	end = s + strcspn (s, delim);
-	if ( '\0' == *end )
+	if (*end == '\0')
 	{
 		*save_ptr = end;
 		return s;
@@ -65,14 +66,8 @@ int determineESTorEDT(time_t tm){
 	char timezoneString[MAX_STRING_SIZE];
 	if(strftime(timezoneString,MAX_STRING_SIZE,"%Z",localtime(&tm)) != 0)
 	{
-		if(!strcmp(timezoneString,UTC5_TIME))
-		{
-			return UTC5_TIME_NUM;
-		}
-		else
-		{
-			return UTC4_TIME_NUM;
-		}
+		if(!strcmp(timezoneString,UTC5_TIME)) return UTC5_TIME_NUM;
+		return UTC4_TIME_NUM;
 	}
 	else {
 		printf("Error: Converting to EST or EDT was Unsuccessful\n");
@@ -89,17 +84,14 @@ void DetermineSpecificArgs(char* paramStr,struct Parameters* inputParams,char* h
 	char *savePtr, *tempParam = strtok_r(paramStr,"\t",&savePtr);
 
 	int argCount = 0, lineCount = 1;
-	if( NULL != file )
-	{
+	if(file != NULL){
 		char line[MAX_STRING_SIZE];
 		while(fgets(line, sizeof(line), file) != NULL){
-			if( NULL == tempParam )
-			{
+			if(tempParam == NULL){
 				fclose(file);
 				return;
 			}
-			else if((atoi(tempParam)) == lineCount)
-			{
+			else if((atoi(tempParam)) == lineCount){
 				strcpy(inputParams->Args[argCount],strtok(line,"\t"));
 				inputParams->argN[argCount] = lineCount;
 				strcpy(inputParams->Args[argCount+1],"\0");
@@ -110,16 +102,11 @@ void DetermineSpecificArgs(char* paramStr,struct Parameters* inputParams,char* h
 
 				inputParams->argC = argCount;
 			}
-			else
-			{
-				//do nothing
-			}
 			lineCount++;
 		}
 		fclose(file);
 	}
-	else 
-	{
+	else {
 		printf("Error: NumToHeaderString.txt doesn't exist in the /exe folder\n");
 		exit(EXIT_FAILURE);
 	}
@@ -134,17 +121,12 @@ struct fileInfo* determineFileArray(struct Parameters* inputParams,char* fileStr
 	char tempPath[MAX_STRING_SIZE];
 	int i, arraySize = 1;
 
-	while( NULL != tempFile ){
+	while(tempFile != NULL){
 
 		//reallocates more memory to the block
-		if(i == arraySize)
-		{
+		if(i==arraySize){
 			arraySize *= 2;
 			fileArray = realloc(fileArray,arraySize * sizeof(struct fileInfo));
-		}
-		else
-		{
-			//do nothing
 		}
 
 		//File Info
@@ -209,14 +191,7 @@ void printParams(struct Parameters* inputParams){
 	printf("%d \n",inputParams->startTime);
 	printf("%d \n",inputParams->endTime);
 	for(int i = 0; i < sizeof(inputParams->Args)/sizeof(inputParams->Args[0]); i++) {
-		if(!strcmp(inputParams->Args[i],"\0")) 
-		{
-			return;
-		}
-		else
-		{
-			//do nothing
-		}
+		if(!strcmp(inputParams->Args[i],"\0")) return;
 		printf("%s \n",inputParams->Args[i]);
 	}
 }
@@ -231,11 +206,10 @@ bool checkOutputFilenames(struct Parameters* inputParams){
 		sprintf(outputFileName,"%s%s.%s",inputParams->dirPath,inputParams->fileArray[i].fileName,CSV_SUFFIX);
 
 		char* checkForNull = nonRecursiveNameCheck(outputFileName);
-		if ( NULL != checkForNull ) 
-		{
+		if (checkForNull != NULL) {
 			strcpy(outputFileName,checkForNull);
-			strcpy(inputParams->fileArray[i].filePath,outputFileName);
-			inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w+");
+		    strcpy(inputParams->fileArray[i].filePath,outputFileName);
+		    inputParams->fileArray[i].fileOutput = fopen(outputFileName,"w+");
 		}
 		else{
 			return false;
@@ -248,13 +222,8 @@ bool checkOutputFilenames(struct Parameters* inputParams){
 //Adds numeric suffix to a name until an available filename is found
 //Returns the overwritten char array
 char* nonRecursiveNameCheck(char* outputFileName){
-	if ( 0 != access(outputFileName, F_OK) ) 
-	{
+	if (access(outputFileName, F_OK) != 0) {
 		return outputFileName;	
-	}
-	else
-	{
-		//do nothing
 	}
 	//memset is necessary to truncate the ending to get rid of .txt or -03.csv for a new filename to test
 	memset(outputFileName + strlen(outputFileName) - 4, 0, 4);
@@ -264,14 +233,11 @@ char* nonRecursiveNameCheck(char* outputFileName){
 		sprintf(numSuffix,"-%02d.%s",fileIncrement,CSV_SUFFIX);
 		strcat(outputFileName,numSuffix);
 
-		if ( 0 != access(outputFileName, F_OK) ) 
-		{
+		if (access(outputFileName, F_OK) != 0) {
 			return outputFileName;	
 		}
-		else
-		{
-			memset(outputFileName + strlen(outputFileName) - 7, 0, 7);
-		}
+
+		memset(outputFileName + strlen(outputFileName) - 7, 0, 7);
 	}
 	
 	printf("Error: The directory is full -- Program will be terminated\n");
@@ -286,8 +252,7 @@ int main(int argc,char** argv){
 
 	printParams(inputParams);
 	
-	if(!checkOutputFilenames(inputParams))
-	{
+	if(!checkOutputFilenames(inputParams)){
 		return 0;
 	}
 
@@ -296,32 +261,26 @@ int main(int argc,char** argv){
 	//If there were multiple files, then they will be concatenated to one Output file
 	//Name is determined by whether a specific name was specified by the user
 	//An available name will be found with a numeric suffix
-	if(inputParams->fileC > 1)
-	{
+	if(inputParams->fileC > 1){
 		char* outputFileName[MAX_STRING_SIZE];
-		if(!strlen(argv[6]))
-		{
+		if(!strlen(argv[6])){
 			sprintf((char*) outputFileName,"%s%s",inputParams->dirPath,GENERAL_OUTPUT_NAME);
 		}
-		else
-		{
+		else{
 			sprintf((char*) outputFileName,"%s%s.%s",inputParams->dirPath,argv[6],CSV_SUFFIX);
 		}
 		//Check for pre-existing 
 		char *checkForNull = nonRecursiveNameCheck((char*) outputFileName);
-		if ( NULL != checkForNull ) 
-		{
+		if (checkForNull != NULL) {
 			strcpy((char*) outputFileName,checkForNull);
 			makeCombinedOutput(inputParams,(char*) outputFileName);
 			printf("File %s Has Been Created\n",outputFileName);
 		}
-		else
-		{
+		else{
 			printf("Error: The directory is full -- Program will be terminated\n");
 		}
 	}
-	else
-	{
+	else{
 		printf("File %s Has Been Created\n",strstr(inputParams->fileArray[0].filePath,inputParams->fileArray[0].fileName));
 	}
 

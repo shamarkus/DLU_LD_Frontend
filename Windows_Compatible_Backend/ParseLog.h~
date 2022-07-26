@@ -29,7 +29,6 @@
 #define UTC4_TIME_NUM 4
 #define UTC5_TIME_NUM 5
 #define MAX_INIT_TIMESTAMPS 11
-#define CORE_MULT 0
 #define CORE_ONE 1
 #define CORE_TWO 2
 #define GENERAL_OUTPUT_NAME "DLUOutputFile.csv"

@@ -20,7 +20,6 @@ function add_file() {
     input.onchange = e => {
         while(buttonsDiv.children.length > 8){
             buttonsDiv.removeChild(buttonsDiv.children[7]);
-            //buttonsDiv.children[3].style = 'margin-right:0;';
         }
         let dupText = document.createElement('p');
         dupText.style = 'color:red; display:inline;';
@@ -35,7 +34,6 @@ function add_file() {
             }
             else{
                 dupText.textContent = `${dupText.textContent} --- ${dups[0].name}`;
-                //buttonsDiv.children[2].style = 'margin-right:0;';
                 buttonsDiv.insertBefore(dupText,buttonsDiv.children[7]);
             }
         }
@@ -427,16 +425,16 @@ function removePreset(removeButton,presetSel,val){
     }
 }
 
-function analyze(analyzeButton){
+function analyze(analyzeButton,outputDiv){
     console.log("reached");
     analyzeButton.disabled = true;
+    outputDiv.removeAttribute('hidden');
 
     let blob = new Blob([makeConfig()], {type: "text/plain"});
     let dlink = document.createElement('a');
     dlink.download = "config.cmd";
     dlink.href = window.URL.createObjectURL(blob);
     dlink.onclick = function(e){
-        console.log(e,this);
         let that = this;
         setTimeout(function(){
             window.URL.revokeObjectURL(blob);
@@ -462,4 +460,29 @@ function makeConfig(){
     contents = contents.concat(`set params=\"${analyzeParams.map(str => str.split('\t')[1]).join("\t")}\"\n`);
     contents = contents.concat(`set outputName=\"${ document.querySelector("#outputNameInp").value === 'Enter Filename for Output [OPTIONAL]' ? "" : document.querySelector("#outputNameInp").value }\"\n`)
     return contents;
+}
+
+function uploadCSVFile(){
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = e => {
+        readFileAsText(e.target.files[0]).then((content) => {
+                console.log(d3.csvParse(content)); //returns object 
+                console.log(d3.csvParseRows(content)); //returns array
+                let parsedCSV = d3.csvParseRows(content);
+                var container = d3.select("#Output")
+                                .append("table")
+            
+                                .selectAll("tr")
+                                .data(parsedCSV).enter()
+                                .append("tr")
+            
+                                .selectAll("td")
+                                .data(function(d) { return d; }).enter()
+                                .append("td")
+                                .text(function(d) { return d; });
+        });
+    }
+    input.click();   
+    input.remove();
 }
