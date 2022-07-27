@@ -3,7 +3,6 @@
 	padding: 0;
 	border: 0;
 	outline: 0;
-	box sizing: border box;
 	-webkit-box-sizing: border-box;
 }
 #container {
@@ -188,4 +187,46 @@ option:hover{
 #selectParameters input {
 	width: 100%;
 	margin-left:0;
+}
+
+table {
+	
+	table-layout: fixed;
+	border-collapse: collapse;
+	border: 3px solid black !important; 
+}
+
+.header {
+	width: 100%;
+	display: block;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+
+th, td {
+	padding: 10px;
+	border-collapse: collapse;
+	border: 2px solid white;
+}
+
+table tr:nth-child(odd){
+	background-color:bisque;
+}
+
+table tr:nth-child(even){
+	background-color:rgb(255, 238, 214);
+}
+
+#table-wrapper {
+	direction:
+	width: inherit;
+	margin-top: 20px;
+	display: block;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+
+.sticky {
+	position: fixed;
+	top: 0;
 }

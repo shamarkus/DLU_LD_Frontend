@@ -3,7 +3,7 @@ const addedFiles = new Array();
 const times = new Array();
 const timesStringArr = new Array();
 let analyzeParams = new Array();
-
+let observer;
 // Restart the entire webpage
 function restart() {
     window.location.reload(true);
@@ -467,22 +467,92 @@ function uploadCSVFile(){
     input.type = 'file';
     input.onchange = e => {
         readFileAsText(e.target.files[0]).then((content) => {
-                console.log(d3.csvParse(content)); //returns object 
-                console.log(d3.csvParseRows(content)); //returns array
+                //remove any pre-existing tables 
+                const outputDiv = document.querySelector('#Output');
+                if(outputDiv.children.length > 2){
+                    const headerToDelete = document.querySelector('.header');
+                    if(headerToDelete){
+                        headerToDelete.remove();
+                    }
+                    if(observer){
+                        observer.unobserve(document.querySelector('thead'));
+                    }
+                    outputDiv.removeChild(outputDiv.lastChild);
+                }
+                //Call on table & observer
+                let tableWrapper = document.createElement('div');
+                let tableHead = document.createElement('thead');
+                tableWrapper.id = 'table-wrapper';
+                tableHead.id = 'table-head';
+                outputDiv.appendChild(tableWrapper);
+
                 let parsedCSV = d3.csvParseRows(content);
-                var container = d3.select("#Output")
+                var container = d3.select('#table-wrapper')
                                 .append("table")
-            
                                 .selectAll("tr")
                                 .data(parsedCSV).enter()
                                 .append("tr")
-            
                                 .selectAll("td")
                                 .data(function(d) { return d; }).enter()
                                 .append("td")
                                 .text(function(d) { return d; });
+
+                const tableElement = document.querySelector('table');
+                tableElement.firstElementChild.innerHTML = tableElement.firstElementChild.innerHTML.replace(/td/g,'th');
+                tableHead.append(tableElement.firstElementChild);
+                
+                if(tableElement.firstElementChild.innerHTML.includes('<td></td>')){
+                    tableElement.firstElementChild.innerHTML = tableElement.firstElementChild.innerHTML.replace(/td/g,'th');
+                    tableHead.append(tableElement.firstElementChild);
+                    [...tableElement.children].forEach(child => {
+                        child.innerHTML = child.innerHTML.replace('td','th');
+                    });
+                }
+                tableElement.prepend(tableHead);
+                
+                const stickyTableHeader = document.createElement('table');
+                stickyTableHeader.append(tableHead.cloneNode(true));
+
+                const stickyTableDiv = document.createElement('div');
+                stickyTableDiv.append(stickyTableHeader);
+
+                observer = new IntersectionObserver(obsCallback.bind(stickyTableDiv), {root: null,
+                                                                        threshold: 0, 
+                                                                        rootMargin: `0px 0px ${tableWrapper.getBoundingClientRect().height}px 0px`,
+                                                                        });
+                observer.observe(tableHead);
+                stickyTableDiv.addEventListener('scroll',function() {
+                     tableWrapper.scrollLeft = stickyTableDiv.scrollLeft;
+                });
         });
     }
     input.click();   
     input.remove();
+}
+
+
+
+const obsCallback  = function (entries) {
+    const [entry] = entries;
+    const tableHead = document.querySelector('#table-head');
+    console.log(entry);
+    if(!entry.intersectionRatio && !entry.isIntersecting){
+        document.querySelector('.wrapper').append(this);
+        this.classList.add('sticky','header');
+
+        this.style.width = tableHead.closest('div').offsetWidth + 'px';
+        this.children[0].style.width = tableHead.closest('table').offsetWidth + 'px';
+        this.children[0].children[0].style.width = tableHead.offsetWidth + 'px';
+        [...tableHead.children].forEach( (row,index1) => {
+                    this.children[0].children[0].children[index1].style.width = row.offsetWidth + 'px';
+                    [...row.children].forEach( (cell,index2) => {
+                        this.children[0].children[0].children[index1].children[index2].style.width = cell.offsetWidth + 'px';
+                    });
+                });
+                
+        //this.firstElementChild.style.width = document.querySelector('#table-wrapper').firstElementChild.firstElementChild.firstElementChild.style.width;
+    }
+    else{
+        this.classList.remove('sticky');
+    }
 }

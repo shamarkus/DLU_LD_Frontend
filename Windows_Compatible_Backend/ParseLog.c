@@ -95,7 +95,7 @@ void writeHeaderLine(FILE* fileOutput,struct Parameters* inputParams){
 		{
 			//do nothing
 		}
-		fprintf(fileOutput,"%s,",inputParams->Args[i]);
+		fprintf(fileOutput,",%s",inputParams->Args[i]);
 	}
 }
 
@@ -116,7 +116,7 @@ void writeChangingRecords(FILE* fileInput,FILE* fileOutput,struct Parameters* in
 		//Header line of log
 		if( 0 == lineCount )
 		{
-			fprintf(fileOutput,"Timestamp,");
+			fprintf(fileOutput,"Timestamp");
 			writeHeaderLine(fileOutput,inputParams);			
 			fprintf(fileOutput,"\n");
 			lineCount++;
@@ -286,7 +286,7 @@ char* convertEpochToString(struct recordInfo* curRecord,char UTCTimestamp[],int 
 void writeRecordInfo(struct recordInfo* curRecord,FILE* fileOutput,int UTC){
 	//Convert epoch time to string
 	char UTCTimestamp[MAX_STRING_SIZE];
-	fprintf(fileOutput,"%s.%d,",convertEpochToString(curRecord,UTCTimestamp,UTC),curRecord->secondFraction);
+	fprintf(fileOutput,"%s.%d",convertEpochToString(curRecord,UTCTimestamp,UTC),curRecord->secondFraction);
 
 	for(int i = 0; i < sizeof(curRecord->logArgs)/sizeof(curRecord->logArgs[0]);i++){
 		if(!strcmp(curRecord->logArgs[i],"\0"))
@@ -298,7 +298,7 @@ void writeRecordInfo(struct recordInfo* curRecord,FILE* fileOutput,int UTC){
 		{
 			//do nothing
 		}
-		fprintf(fileOutput,"%s,",curRecord->logArgs[i]);
+		fprintf(fileOutput,",%s",curRecord->logArgs[i]);
 	}
 }
 
@@ -410,7 +410,7 @@ void concatFiles(FILE* outputFile, struct Parameters* inputParams){
 			}
 			else if( 1 == lineCount )
 			{
-				fprintf(outputFile,"%s,",strcat(inputParams->fileArray[i].fileName,TXT_SUFFIX));
+				fprintf(outputFile,"%s.%s,",inputParams->fileArray[i].fileName,TXT_SUFFIX);
 			}	
 			else
 			{
@@ -425,11 +425,17 @@ void concatFiles(FILE* outputFile, struct Parameters* inputParams){
 				//Print empty commas
 				repeatCommas(outputFile,inputParams->argC);
 				//Print the rest of the data
-				fprintf(outputFile,"%s",line+21);
+				fprintf(outputFile,"%s",line+CHARS_AFTER_TIMESTAMP);
 			}
 			else
 			{
+				line[strlen(line)-1]='\0';
 				fprintf(outputFile,"%s",line);
+				if(!inputParams->multCores)
+				{
+					repeatCommas(outputFile,inputParams->argC);
+				}
+				fprintf(outputFile,"\n");
 			}
 			lineCount++;
 		}
@@ -444,10 +450,10 @@ void makeCombinedOutput(struct Parameters* inputParams,char* outputFileName){
 	FILE* outputFile = fopen(outputFileName,"w");
 	
 	inputParams->multCores = checkMultCores(inputParams);
-	fprintf(outputFile,",");
+	fprintf(outputFile,"%s,",outputFileName+strlen(inputParams->dirPath));
 	writeCoreHeader(outputFile,inputParams->multCores,inputParams->argC);
 
-	fprintf(outputFile,",Timestamp,");
+	fprintf(outputFile,",Timestamp");
 	writeHeaderLine(outputFile,inputParams);
 	if(!inputParams->multCores)
 	{

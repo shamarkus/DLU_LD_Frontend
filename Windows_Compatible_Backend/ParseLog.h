@@ -34,6 +34,7 @@
 #define CORE_TWO 2
 #define GENERAL_OUTPUT_NAME "DLUOutputFile.csv"
 #define ARG_NUM_AFTER_DATE_TIME 3
+#define CHARS_AFTER_TIMESTAMP 21
 //Struct & Global Variable Declarations
 struct fileInfo {
 	char fileName[MAX_STRING_SIZE];
