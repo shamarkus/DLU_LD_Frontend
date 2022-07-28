@@ -26,10 +26,11 @@ function add_file() {
         dupText.textContent = `Error: Failed To Upload File - Conflicting File Names `;
         for(let i=0;i<e.target.files.length;i++){
             const dups = addedFiles.filter(f => f.name === e.target.files[i].name);
-            if(dups.length === 0){
+            if(!dups.length){
                 let opt = document.createElement('option');
                 addedFiles.push(e.target.files[i]);
-                opt.textContent = e.target.files[i].name;
+                opt.value = addedFiles.length;
+                opt.textContent = `${addedFiles.length}: ${e.target.files[i].name}`;
                 addedFilesSel.appendChild(opt);
             }
             else{
@@ -50,7 +51,8 @@ function remove_file() {
     let selectedFile = (document.querySelector('#addedFilenames').selectedIndex === -1) ? document.querySelector('#addedFilenames2') : document.querySelector('#addedFilenames');
     if(selectedFile.selectedIndex !== -1){
         let opt = selectedFile.children[selectedFile.selectedIndex];
-        addedFiles.splice(addedFiles.indexOf(opt.textContent),1);
+        addedFiles.splice(addedFiles.findIndex( file => opt.textContent.includes(file.name)),1);
+        updateFileNumbers(opt.value);
         selectedFile.removeChild(opt);
     }
     if(!addedFiles.length){
@@ -60,7 +62,17 @@ function remove_file() {
     }
 }
 
-function dragToSel(transferSel,curSel){
+function updateFileNumbers(val) {
+    const opts = [...document.querySelector('#addedFilenames').children,...document.querySelector('#addedFilenames2').children]
+    opts.forEach( opt => {
+        if(opt.value > val){
+            const fileName = opt.textContent.slice(opt.textContent.indexOf(':'));
+            opt.value--;
+            opt.textContent = `${opt.value}${fileName}`;
+        }
+    });
+}
+function dragToSel(transferSel,curSel,e){
         if(transferSel.selectedIndex === -1 && curSel.selectedIndex !== -1){
             transferSel.appendChild(curSel.children[curSel.selectedIndex]);
             transferSel.selectedIndex = -1;
@@ -535,22 +547,17 @@ function uploadCSVFile(){
 const obsCallback  = function (entries) {
     const [entry] = entries;
     const tableHead = document.querySelector('#table-head');
-    console.log(entry);
     if(!entry.intersectionRatio && !entry.isIntersecting){
         document.querySelector('.wrapper').append(this);
-        this.classList.add('sticky','header');
-
+        this.classList.add('sticky','header','Flipped');
         this.style.width = tableHead.closest('div').offsetWidth + 'px';
         this.children[0].style.width = tableHead.closest('table').offsetWidth + 'px';
-        this.children[0].children[0].style.width = tableHead.offsetWidth + 'px';
         [...tableHead.children].forEach( (row,index1) => {
-                    this.children[0].children[0].children[index1].style.width = row.offsetWidth + 'px';
                     [...row.children].forEach( (cell,index2) => {
                         this.children[0].children[0].children[index1].children[index2].style.width = cell.offsetWidth + 'px';
                     });
                 });
-                
-        //this.firstElementChild.style.width = document.querySelector('#table-wrapper').firstElementChild.firstElementChild.firstElementChild.style.width;
+        this.scrollLeft = tableHead.closest('div').scrollLeft;
     }
     else{
         this.classList.remove('sticky');

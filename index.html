@@ -26,13 +26,13 @@
 			</div>
             <br>
             <div id="addedFiles" style="margin-left:0;">
-					<select id="addedFilenames" size="6" onmouseup="dragToSel(this,addedFilenames2)">
-					<option style="text-align: center; color:red;" disabled>Core 1</option>
+					<select id="addedFilenames" size="6" onchange="if(addedFilenames2.selectedIndex !== -1) addedFilenames2.selectedIndex = -1;" onmouseup="dragToSel(this,addedFilenames2,event)">
+					<option value=0 style="text-align: center; color:red;" disabled>Core 1</option>
 				</select>
 			</div>
 			<div id="addedFiles2" style="margin-right:35%;">
-				<select id="addedFilenames2" size="6" onmouseup="dragToSel(this,addedFilenames)">
-					<option style="text-align: center; color:red;" disabled>Core 2</option>
+				<select id="addedFilenames2" size="6" onchange="if(addedFilenames.selectedIndex !== -1) addedFilenames.selectedIndex = -1;" onmouseup="dragToSel(this,addedFilenames,event)">
+					<option value=0 style="text-align: center; color:red;" disabled>Core 2</option>
 				</select>			
 			</div>
             <button id="upload" onclick="Upload(this)" style="margin-top:15px" disabled>Upload</button>
