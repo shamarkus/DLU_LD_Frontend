@@ -46,10 +46,10 @@ Filtered acceleration	45
 * Kinematics	46
 Filtered Stop	47
 Train motion	48
-Train speed [km/h]	49
-Train speed E1 [km/h]	50
-Train accel [km/h^2]	51
-Train speed E2 [km/h] 	52
+Train speed	49
+Train speed E1	50
+Train accel	51
+Train speed E2	52
 Motion from beacon	53
 Train motion E1	54
 Train motion E2	55

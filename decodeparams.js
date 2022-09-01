@@ -1,9 +1,15 @@
 'use strict';
+//Global variable definitions
 const addedFiles = new Array();
+const addedFilesTXT = new Array();
+const addedFilesOMAP = new Array();
+
 const times = new Array();
 const timesStringArr = new Array();
+
 let analyzeParams = new Array();
 let observer;
+
 // Restart the entire webpage
 function restart() {
     window.location.reload(true);
@@ -14,7 +20,6 @@ function restart() {
 function add_file() {
     let input = document.createElement('input');
     let buttonsDiv = document.querySelector('#upload_buttons');
-    let addedFilesSel = document.querySelector('#addedFilenames');
     input.type = 'file';
     input.multiple = 'multiple';
     input.onchange = e => {
@@ -22,16 +27,46 @@ function add_file() {
             buttonsDiv.removeChild(buttonsDiv.children[7]);
         }
         let dupText = document.createElement('p');
+        let conflictingTypes = document.createElement('p');
         dupText.style = 'color:red; display:inline;';
         dupText.textContent = `Error: Failed To Upload File - Conflicting File Names `;
+        conflictingTypes.style = 'color:red; display:inline;';
+        conflictingTypes.textContent = `Error: Failed To Upload File - Conflicting Log Types (ATO VS ATP) `;
+
         for(let i=0;i<e.target.files.length;i++){
             const dups = addedFiles.filter(f => f.name === e.target.files[i].name);
+
+            
             if(!dups.length){
                 let opt = document.createElement('option');
                 addedFiles.push(e.target.files[i]);
                 opt.value = addedFiles.length;
                 opt.textContent = `${addedFiles.length}: ${e.target.files[i].name}`;
-                addedFilesSel.appendChild(opt);
+                
+                if(e.target.files[i].name.includes(".txt")){
+                    addedFilesTXT.push(e.target.files[i].name);
+                    document.querySelector('#addedFilenames').appendChild(opt);
+                } 
+                else{
+                    addedFilesOMAP.push(e.target.files[i].name);
+                    const typeATO = addedFilesOMAP.filter(f => f.includes("80_"));
+                    const typeATP = addedFilesOMAP.filter(f => f.includes("c0_"));
+
+                    //!XOR Operator Mimic
+                    if(!(!typeATO.length != !typeATP.length)){
+                        conflictingTypes.textContent = `${conflictingTypes.textContent} --- ${e.target.files[i].name}`;
+                        buttonsDiv.insertBefore(conflictingTypes,buttonsDiv.children[7]);
+                        addedFilesOMAP.pop();
+                        addedFiles.pop();
+                    }
+                    else if(e.target.files[i].name.includes("180_") || e.target.files[i].name.includes("1c0_")){
+                        document.querySelector('#addedFilenames').appendChild(opt);
+                    }
+                    else{
+                        document.querySelector('#addedFilenames2').appendChild(opt);
+                    }
+                    
+                }
             }
             else{
                 dupText.textContent = `${dupText.textContent} --- ${dups[0].name}`;
@@ -51,7 +86,13 @@ function remove_file() {
     let selectedFile = (document.querySelector('#addedFilenames').selectedIndex === -1) ? document.querySelector('#addedFilenames2') : document.querySelector('#addedFilenames');
     if(selectedFile.selectedIndex !== -1){
         let opt = selectedFile.children[selectedFile.selectedIndex];
-        addedFiles.splice(addedFiles.findIndex( file => opt.textContent.includes(file.name)),1);
+        const deletedFile = addedFiles.splice(addedFiles.findIndex( file => opt.textContent.includes(file.name)),1).pop();
+        if(deletedFile.name.includes(".txt")){
+            addedFilesTXT.splice(addedFilesTXT.findIndex( file => deletedFile.name === file.name),1);
+        }
+        else{
+            addedFilesOMAP.splice(addedFilesOMAP.findIndex( file => deletedFile.name === file.name),1);
+        }
         updateFileNumbers(opt.value);
         selectedFile.removeChild(opt);
     }
@@ -73,7 +114,7 @@ function updateFileNumbers(val) {
     });
 }
 function dragToSel(transferSel,curSel,e){
-        if(transferSel.selectedIndex === -1 && curSel.selectedIndex !== -1){
+        if(transferSel.selectedIndex === -1 && curSel.selectedIndex !== -1 && curSel.children[curSel.selectedIndex].textContent.includes('.txt')){
             transferSel.appendChild(curSel.children[curSel.selectedIndex]);
             transferSel.selectedIndex = -1;
         }
@@ -87,10 +128,10 @@ function Upload(b){
     document.querySelector('#addedFilenames').disabled = true;
     b.disabled = true;
 
+    //Fork files based on OMAP vs TXT type
+
     //Read file to get time layouts
     getStartEndTimes();
-    //Uncover Internal Parameters
-    document.querySelector('#parameter_div').removeAttribute('hidden');
 }
 
 Date.prototype.addSeconds = function(seconds){
@@ -118,7 +159,7 @@ function readFileAsText(file){
         fr.onerror = function(){
             reject(fr);
         };
-        fr.readAsText(file);
+        fr.readAsText(file, 'ISO-8859-1');
     });
 }
 
@@ -129,22 +170,42 @@ function getStartEndTimes(){
     }
     Promise.all(readers).then((content) => {
         for(let i=0;i<content.length;i++){
-            let lines = content[i].split('\n');
-            let startTime = `${(lines[1].split('\t'))[0]} ${(lines[1].split('\t'))[1]}`;
-            let endTime = `${(lines[lines.length-2].split('\t'))[0]} ${(lines[lines.length-2].split('\t'))[1]}`;
-            
-            startTime = new Date(startTime.slice(0,-4)+' UTC');
-            endTime = new Date(endTime.slice(0,-4)+' UTC');
+            let lines, startTime, endTime;
+
+            if(!addedFiles[i].name.includes(".txt")){
+                let epochNum;
+                lines = content[i].slice(0,4);
+                [...lines].forEach((char,index) => {
+                    epochNum = (epochNum | (char.charCodeAt(0) << ((3 - index) * 8))) >>> 0;
+                })
+                epochNum -= 2208988800;
+                epochNum *= 1000;
+                startTime = new Date(epochNum);
+                endTime = new Date(epochNum + 1000*600);
+            }
+            else{
+                lines = content[i].split('\n');
+                startTime = `${(lines[1].split('\t'))[0]} ${(lines[1].split('\t'))[1]}`;
+                endTime = `${(lines[lines.length-2].split('\t'))[0]} ${(lines[lines.length-2].split('\t'))[1]}`;
+                
+                startTime = new Date(startTime.slice(0,-4)+' UTC');
+                endTime = new Date(endTime.slice(0,-4)+' UTC');
+            }
             times.push({time: startTime, index: i});
             times.push({time: endTime, index: i});
             timesStringArr.push({startTime: startTime,endTime: endTime,index: i});
         }
         times.sort(compare);
-        getTimeIntervals(addToSelectTimeList);
+        getTimeIntervals();
+        //Uncover Internal Parameters
+        document.querySelector('#parameter_div').removeAttribute('hidden');
+        if(addedFilesOMAP.length){
+            callTables(document.querySelector("#ATsel"),true);
+        }
     });
 }
 
-function getTimeIntervals(myCallback){
+function getTimeIntervals(){
     let startEndContainer = new Array();
     let startTimes = new Array();
     let curDate = times[0].time.addSeconds(60);
@@ -175,15 +236,15 @@ function getTimeIntervals(myCallback){
             startTimes.push(`EOF ${times[i].index+1} : ${times[i].time.yyyymmdd()}`);
         }
     }
-    myCallback(startTimes);
+    addToSelectTimeList(startTimes);
 }
 Date.prototype.yyyymmdd = function() {
-  let mm = this.getMonth() + 1; // getMonth() is zero-based
-  let dd = this.getDate();
-  let hh = this.getHours();
-  let MM = this.getMinutes();
-  let SS = this.getSeconds();
-  return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${(hh>9 ? '' : '0')+hh}:${(MM>9 ? '' : '0')+MM}:${(SS>9 ? '' : '0')+SS}`;
+    let mm = this.getMonth() + 1; // getMonth() is zero-based
+    let dd = this.getDate();
+    let hh = this.getHours();
+    let MM = this.getMinutes();
+    let SS = this.getSeconds();
+    return `${this.getFullYear()}-${(mm>9 ? '' : '0')+mm}-${(dd>9 ? '' : '0')+dd} ${(hh>9 ? '' : '0')+hh}:${(MM>9 ? '' : '0')+MM}:${(SS>9 ? '' : '0')+SS}`;
 };
 function addToSelectTimeList(startTimes){
     let selectStart = document.querySelector("#start");
@@ -246,8 +307,13 @@ function callTables(sel,clear){
     if(!sel.selectedIndex){
         content = ATO;
     }
-    else{
+    else if(sel.selectedIndex === 1){
         content = ATP;
+    }
+    else{
+        const logTypeBool = addedFilesOMAP[0].includes("c0_");
+        sel.selectedIndex = logTypeBool ? 0 : 1;
+        content = logTypeBool ? ATO : ATP;
     }
     if(clear){
         let presetSel = document.querySelector('#preset');
@@ -461,10 +527,11 @@ function makeConfig(){
     let selectEnd = document.querySelector("#end");
     let contents = `set logType=\"${document.querySelector('#ATsel').selectedIndex}\"\nset files=\"`;
     for(const index of new Set(times.map(time => time.index))){
+        const regex = new RegExp(`${addedFiles[index].name}$`);
         contents = contents
         .concat(addedFiles[index].name)
         .concat('\t')
-        .concat(Object.values(document.querySelector('#addedFilenames').children).find(child => child.textContent === addedFiles[index].name) ? "1" : "2")
+        .concat(Object.values(document.querySelector('#addedFilenames').children).find(child => child.textContent.match(regex)) ? "1" : "2")
         .concat('\t');
     }
     contents = contents.slice(0,-1).concat('\"\n');
@@ -541,8 +608,6 @@ function uploadCSVFile(){
     input.click();   
     input.remove();
 }
-
-
 
 const obsCallback  = function (entries) {
     const [entry] = entries;
